@@ -9,7 +9,11 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configurating SQLite
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=CapsuleCorp.db"));
+//builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=CapsuleCorp.db"));
+
+// Configurating PostgreSQL
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services to the container.
 builder.Services.AddControllers();
