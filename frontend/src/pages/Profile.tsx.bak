@@ -1,0 +1,46 @@
+﻿import React, { useEffect, useState } from "react";
+import { getToken, updateProfile, clearToken } from "../services/api";
+
+export default function Profile() {
+  const token = getToken();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Poderíamos buscar dados do usuário aqui se houvesse endpoint GET /me
+  }, []);
+
+  if (!token) return <div>Não autenticado.</div>;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const res = await updateProfile(token, { name, email, currentPassword, newPassword });
+    if (res?.message) {
+      setMsg(res.message);
+    } else {
+      setMsg("Perfil atualizado.");
+    }
+  }
+
+  return (
+    <div className="card">
+      <h2>Perfil</h2>
+      {msg && <div className="info">{msg}</div>}
+      <form onSubmit={handleSubmit}>
+        <label>Nome</label>
+        <input value={name} onChange={e => setName(e.target.value)} />
+        <label>Email</label>
+        <input value={email} onChange={e => setEmail(e.target.value)} />
+        <label>Senha atual (para trocar)</label>
+        <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
+        <label>Nova senha</label>
+        <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+        <button type="submit">Atualizar</button>
+      </form>
+      <button onClick={() => { clearToken(); window.location.reload(); }}>Sair</button>
+    </div>
+  );
+}

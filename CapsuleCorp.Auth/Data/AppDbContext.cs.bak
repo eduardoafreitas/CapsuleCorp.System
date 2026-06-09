@@ -12,6 +12,5 @@ namespace CapsuleCorp.Auth.API.Data
 
         // Aqui você avisa ao Entity Framework que quer criar uma tabela de Usuarios
         public DbSet<User> Users { get; set; }
-        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }

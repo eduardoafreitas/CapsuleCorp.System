@@ -1,0 +1,54 @@
+﻿const API_BASE = import.meta.env.VITE_API_URL ?? "https://localhost:5001";
+
+function headers(token?: string) {
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) h["Authorization"] = `Bearer ${token}`;
+  return h;
+}
+
+export async function register(payload: { name: string; email: string; password: string }) {
+  const res = await fetch(`${API_BASE}/api/Auth/register`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function login(payload: { email: string; password: string }) {
+  const res = await fetch(`${API_BASE}/api/Auth/login`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function updateProfile(token: string, payload: any) {
+  const res = await fetch(`${API_BASE}/api/Auth/update-profile`, {
+    method: "PUT",
+    headers: headers(token),
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function getMe(token: string) {
+  const res = await fetch(`${API_BASE}/api/Auth/me`, {
+    method: "GET",
+    headers: headers(token)
+  });
+  return res.json();
+}
+
+export function saveToken(token: string) {
+  localStorage.setItem("token", token);
+}
+
+export function getToken(): string | null {
+  return localStorage.getItem("token");
+}
+
+export function clearToken() {
+  localStorage.removeItem("token");
+}

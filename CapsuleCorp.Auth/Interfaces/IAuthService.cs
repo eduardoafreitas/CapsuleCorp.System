@@ -10,5 +10,7 @@ namespace CapsuleCorp.Auth.Interfaces
         Task<string?> LoginAsync(LoginDto loginDto);
 
         Task<User> UpdateUserAsync(Guid userId, UpdateUserDto dto);
+
+        Task<User?> GetByIdAsync(Guid userId);
     }
 }

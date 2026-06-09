@@ -8,12 +8,20 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurating SQLite
-//builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=CapsuleCorp.db"));
-
 // Configurating PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// CORS para desenvolvimento do frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Porta do seu React
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -75,6 +83,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

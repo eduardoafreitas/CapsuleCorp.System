@@ -33,7 +33,6 @@ namespace CapsuleCorp.Auth.Services
                 Email = dto.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 CreateDate = DateTime.UtcNow,
-                //LastUpdateDate = DateTime.UtcNow
             };
 
             _context.Users.Add(user);
@@ -44,16 +43,13 @@ namespace CapsuleCorp.Auth.Services
 
         public async Task<string?> LoginAsync(LoginDto loginDto)
         {
-            // 1. Busca o usuário pelo e-mail
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
 
-            // 2. Verifica se existe e se a senha bate (BCrypt)
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
                 return null;
             }
 
-            // 3. Gera o Token JWT
             return CreateToken(user);
         }
 
@@ -62,15 +58,13 @@ namespace CapsuleCorp.Auth.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null) throw new Exception("Usuário não encontrado.");
 
-            // Valida se o novo e-mail já pertence a outro usuário
-            //if (user.Email != dto.Email && await _context.Users.AnyAsync(u => u.Email == dto.Email))
-            //    throw new Exception("Este e-mail já está em uso por outra conta.");
+            if (user.Email != dto.Email && await _context.Users.AnyAsync(u => u.Email == dto.Email))
+                throw new Exception("Este e-mail já está em uso por outra conta.");
 
             user.Name = dto.Name;
             user.Email = dto.Email;
             user.LastUpdateDate = DateTime.UtcNow;
 
-            // Lógica de Troca de Senha (só ocorre se ambos os campos forem preenchidos)
             if (!string.IsNullOrEmpty(dto.CurrentPassword) && !string.IsNullOrEmpty(dto.NewPassword))
             {
                 if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
@@ -85,9 +79,13 @@ namespace CapsuleCorp.Auth.Services
             return user;
         }
 
+        public async Task<User?> GetByIdAsync(Guid userId)
+        {
+            return await _context.Users.FindAsync(userId);
+        }
+
         private string CreateToken(User user)
         {
-            // Define as "Claims" (informações que vão dentro do token)
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -95,18 +93,15 @@ namespace CapsuleCorp.Auth.Services
                 new Claim(ClaimTypes.Name, user.Name)
             };
 
-            // Utiliza a chave do appsettings.json
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
                 _configuration.GetSection("Jwt:Key").Value!));
 
-            // Cria a assinatura digital (o selo de autenticidade)
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
 
-            // Monta o "pacote" do token
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(2),
+                Expires = DateTime.UtcNow.AddSeconds(30), // tempo de expiracao do token (45 segundos para testes)
                 SigningCredentials = creds,
                 Issuer = _configuration.GetSection("Jwt:Issuer").Value,
                 Audience = _configuration.GetSection("Jwt:Audience").Value
