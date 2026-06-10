@@ -1,4 +1,4 @@
-# CapsuleCorp.Auth.API 💊
+# CapsuleCorp.System.API 💊
 
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/9.0)
 [![EF Core](https://img.shields.io/badge/EF%20Core-9.0-blue)](https://learn.microsoft.com/ef/core/)
@@ -62,7 +62,7 @@ Principais componentes:
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/eduardoafreitas/CapsuleCorp.Auth.API.git
+git clone https://github.com/eduardoafreitas/CapsuleCorp.System.git
 ```
 
 2. Configure a conexão com o banco de dados e as chaves JWT em `appsettings.Development.json`.
