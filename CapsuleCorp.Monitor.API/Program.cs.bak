@@ -1,0 +1,57 @@
+using CapsuleCorp.Monitor.API.Data;
+using CapsuleCorp.Monitor.API.Hubs;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Adiciona os serviços ao contêiner.
+builder.Services.AddControllers();
+
+// 1. Adiciona o serviço do SignalR
+builder.Services.AddSignalR();
+
+var connectionString = builder.Configuration.GetConnectionString("MonitorConnection");
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+// 2. Configura CORS para permitir o SignalR com credenciais (Cookies HttpOnly)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Ajuste para a URL do seu frontend (Vite)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Obrigatório para SignalR + Auth via Cookies
+    });
+});
+
+// Configuração do Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// --- ATIVE O SWAGGER NO PIPELINE DE REQUISIÇÕES ---
+// Isso garante que ele funcione tanto em desenvolvimento quanto produção local
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "CapsuleCorp Monitor API v1");
+    });
+}
+
+app.UseHttpsRedirection();
+
+app.UseCors("FrontendPolicy");
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+// 3. Mapeia o endpoint do Hub
+app.MapHub<TelemetryHub>("/telemetryHub");
+
+app.Run();

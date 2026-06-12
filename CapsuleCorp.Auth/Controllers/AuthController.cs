@@ -1,8 +1,15 @@
 using CapsuleCorp.Auth.DTOs;
 using CapsuleCorp.Auth.Interfaces;
+using CapsuleCorp.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CapsuleCorp.Auth.Controllers
 {
@@ -11,30 +18,87 @@ namespace CapsuleCorp.Auth.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IConfiguration configuration, IWebHostEnvironment env)
         {
             _authService = authService;
+            _configuration = configuration;
+            _env = env;
         }
 
-        private static UserResponseDto MapToDto(CapsuleCorp.Auth.Models.User user) =>
+        // 💡 Ajustado: Agora aceita a lista opcional de roles para não quebrar o login/registro
+        private static UserResponseDto MapToDto(CapsuleCorp.Auth.Models.User user, IList<string>? roles = null) =>
             new UserResponseDto
             {
                 Id = user.Id,
                 Name = user.Name,
                 Email = user.Email,
                 CreateDate = user.CreateDate,
-                LastUpdateDate = user.LastUpdateDate
+                LastUpdateDate = user.LastUpdateDate,
+                Roles = roles ?? new List<string>()
             };
 
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        {
+            if (!(_authService is AuthService concrete))
+            {
+                var token = await _authService.LoginAsync(loginDto);
+                if (token == null) return Unauthorized(new { message = "E-mail ou senha inválidos." });
+                return Ok(new { message = "Login bem-sucedido." });
+            }
+
+            var tokens = await concrete.LoginWithTokensAsync(loginDto);
+            if (tokens == null) return Unauthorized(new { message = "E-mail ou senha inválidos." });
+
+            var isDev = _env.IsDevelopment();
+
+            var accessCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDev,
+                SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+                Expires = tokens.AccessExpiresAt
+            };
+
+            var refreshCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDev,
+                SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+                Expires = tokens.RefreshExpiresAt
+            };
+
+            Response.Cookies.Append("access_token", tokens.AccessToken ?? string.Empty, accessCookieOptions);
+            Response.Cookies.Append("refresh_token", tokens.RefreshToken ?? string.Empty, refreshCookieOptions);
+
+            return Ok(new
+            {
+                message = "Login bem-sucedido.",
+                accessToken = tokens.AccessToken,
+                refreshToken = tokens.RefreshToken,
+                expiresAt = tokens.AccessExpiresAt
+            });
+        }
+
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
+        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
             try
             {
-                var user = await _authService.RegisterAsync(registerDto);
-                var dto = MapToDto(user);
-                return Created(string.Empty, new { message = "Usuário cadastrado com sucesso!", user = dto });
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var user = await _authService.RegisterAsync(dto);
+                var dtoResp = MapToDto(user);
+
+                return Ok(new
+                {
+                    message = "Usuário registrado com sucesso!",
+                    user = dtoResp
+                });
             }
             catch (Exception ex)
             {
@@ -42,17 +106,139 @@ namespace CapsuleCorp.Auth.Controllers
             }
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] Dictionary<string, string>? body)
         {
-            var token = await _authService.LoginAsync(loginDto);
+            string? refreshToken = null;
 
-            if (token == null)
+            if (Request.Cookies.TryGetValue("refresh_token", out var cookieToken) && !string.IsNullOrEmpty(cookieToken))
             {
-                return Unauthorized(new { message = "E-mail ou senha inválidos." });
+                refreshToken = cookieToken;
             }
 
-            return Ok(new { token = token });
+            if (string.IsNullOrEmpty(refreshToken) && body != null)
+            {
+                if (body.TryGetValue("refreshToken", out var tokenFromBody) && !string.IsNullOrEmpty(tokenFromBody))
+                {
+                    refreshToken = tokenFromBody;
+                }
+                else if (body.TryGetValue("refresh_token", out var tokenFromBodyAlt) && !string.IsNullOrEmpty(tokenFromBodyAlt))
+                {
+                    refreshToken = tokenFromBodyAlt;
+                }
+            }
+
+            if (string.IsNullOrEmpty(refreshToken))
+                return BadRequest(new { message = "Refresh token ausente." });
+
+            if (!(_authService is AuthService concrete))
+                return StatusCode(501, new { message = "Refresh não foi implementado na versão atual do IAuthService." });
+
+            var tokens = await concrete.RefreshTokenAsync(refreshToken);
+            if (tokens == null) return Unauthorized(new { message = "Refresh token inválido ou expirado." });
+
+            var isDev = _env.IsDevelopment();
+
+            var accessCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDev,
+                SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+                Expires = tokens.AccessExpiresAt
+            };
+
+            var refreshCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDev,
+                SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+                Expires = tokens.RefreshExpiresAt
+            };
+
+            Response.Cookies.Append("access_token", tokens.AccessToken ?? string.Empty, accessCookieOptions);
+            Response.Cookies.Append("refresh_token", tokens.RefreshToken ?? string.Empty, refreshCookieOptions);
+
+            return Ok(new
+            {
+                message = "Tokens updated.",
+                accessToken = tokens.AccessToken,
+                refreshToken = tokens.RefreshToken,
+                expiresAt = tokens.AccessExpiresAt
+            });
+        }
+
+        [HttpPost("revoke")]
+        public async Task<IActionResult> Revoke([FromBody] Dictionary<string, string>? body)
+        {
+            string? refreshToken = null;
+
+            if (Request.Cookies.TryGetValue("refresh_token", out var cookieToken) && !string.IsNullOrEmpty(cookieToken))
+            {
+                refreshToken = cookieToken;
+            }
+
+            if (string.IsNullOrEmpty(refreshToken) && body != null)
+            {
+                if (body.TryGetValue("refreshToken", out var tokenFromBody) && !string.IsNullOrEmpty(tokenFromBody))
+                {
+                    refreshToken = tokenFromBody;
+                }
+                else if (body.TryGetValue("refresh_token", out var tokenFromBodyAlt) && !string.IsNullOrEmpty(tokenFromBodyAlt))
+                {
+                    refreshToken = tokenFromBodyAlt;
+                }
+            }
+
+            if (string.IsNullOrEmpty(refreshToken))
+                return BadRequest(new { message = "Refresh token ausente." });
+
+            if (!(_authService is AuthService concrete))
+                return StatusCode(501, new { message = "Revoke não foi implementado na versão atual do IAuthService." });
+
+            var ok = await concrete.RevokeRefreshTokenAsync(refreshToken);
+
+            Response.Cookies.Delete("access_token");
+            Response.Cookies.Delete("refresh_token");
+
+            if (!ok) return NotFound(new { message = "Token não encontrado ou já revogado." });
+            return Ok(new { message = "Refresh token revogado." });
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] Dictionary<string, string>? body)
+        {
+            string? refreshToken = null;
+
+            if (Request.Cookies.TryGetValue("refresh_token", out var cookieToken) && !string.IsNullOrEmpty(cookieToken))
+            {
+                refreshToken = cookieToken;
+            }
+
+            if (string.IsNullOrEmpty(refreshToken) && body != null)
+            {
+                if (body.TryGetValue("refreshToken", out var tokenFromBody) && !string.IsNullOrEmpty(tokenFromBody))
+                {
+                    refreshToken = tokenFromBody;
+                }
+                else if (body.TryGetValue("refresh_token", out var tokenFromBodyAlt) && !string.IsNullOrEmpty(tokenFromBodyAlt))
+                {
+                    refreshToken = tokenFromBodyAlt;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(refreshToken) && _authService is AuthService concrete)
+            {
+                try
+                {
+                    await concrete.RevokeRefreshTokenAsync(refreshToken);
+                }
+                catch { }
+            }
+
+            Response.Cookies.Delete("access_token");
+            Response.Cookies.Delete("refresh_token");
+
+            return Ok(new { message = "Logout concluído." });
         }
 
         [Authorize]
@@ -100,14 +286,25 @@ namespace CapsuleCorp.Auth.Controllers
 
             if (user == null) return NotFound(new { message = "Usuário não encontrado." });
 
-            return Ok(MapToDto(user));
+            // Lógica adicionada: Extrai as roles reais do token JWT
+            var userRoles = User.FindAll(ClaimTypes.Role)
+                                .Select(c => c.Value)
+                                .ToList();
+
+            // Fallback seguro usando uma role compatível com seu banco de dados
+            if (!userRoles.Any()) userRoles.Add("Viewer");
+
+            // Mapeia o DTO recheando com as roles encontradas
+            var dtoResp = MapToDto(user, userRoles);
+
+            return Ok(dtoResp);
         }
 
         [HttpGet]
         [Authorize]
         public IActionResult GetDadosProtegidos()
         {
-            return Ok("Você só vê isso porque o Program.cs validou seu Token!");
+            return Ok("Você só viu isso porque o Program.cs validou seu Token!");
         }
     }
 }

@@ -1,33 +1,82 @@
-﻿/* Tema dark e layout moderno */
-:root {
-  --bg: #0f1720;
+﻿﻿.dummy-fix { display: none; }
+
+/* ==========================================================================
+   TEMA DARK ORIGINAL
+   ========================================================================== */
+html {
+  --bg: #0b1120;
   --card: #111827;
-  --muted: #9aa4b2;
-  --accent: #7c5cff;
-  --accent-2: #00d4ff;
-  --text: #e6eef8;
-  --success: #22c55e;
+  --card-border: rgba(255, 255, 255, 0.1);
+  --text: #f8fafc;
+  --muted: #94a3b8; 
+  --accent-1: #8f6cff;
+  --accent-2: #35e6ff;
+  --success: #10b981;
   --danger: #ef4444;
+  --warning: #f59e0b;
+  --btn-text: #040914; 
+  color-scheme: dark;
 }
+
+/* ==========================================================================
+   TEMA LIGHT (Ativado apenas via JavaScript)
+   ========================================================================== */
+html[data-theme="light"] {
+  --bg: #d1d8e0;
+  --card: #ffffff; 
+  --card-border: rgba(11, 17, 32, 0.15); 
+  --text: #0b1120; 
+  --muted: #475569; 
+  --accent-1: #0b1120; 
+  --accent-2: #111827; 
+  --btn-text: #ffffff; 
+  color-scheme: light;
+}
+
+html[data-theme="light"] header nav button,
+html[data-theme="light"] .btn-secondary {
+  background: rgba(11, 17, 32, 0.05);
+  border-color: rgba(11, 17, 32, 0.2);
+  color: var(--text);
+}
+
+html[data-theme="light"] header nav button:hover,
+html[data-theme="light"] .btn-secondary:hover {
+  background: rgba(11, 17, 32, 0.1);
+}
+
+html[data-theme="light"] .card input {
+  background-color: #ffffff;
+  border-color: rgba(11, 17, 32, 0.2);
+  color: var(--text);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+html[data-theme="light"] .card input:focus {
+  border-color: #0b1120;
+  box-shadow: 0 0 0 3px rgba(11, 17, 32, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+/* ========================================================================== */
 
 * {
-  box-sizing: border-box
+  box-sizing: border-box;
 }
 
-body {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background: linear-gradient(180deg, #071021 0%, #0f1720 100%);
+body, #root {
+  background-color: var(--bg);
   color: var(--text);
   margin: 0;
   padding: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .app {
-  max-width: 920px;
-  margin: 3rem auto;
-  padding: 1.5rem;
+  max-width: 1000px;
+  margin: 4rem auto;
+  padding: 0 2rem;
 }
 
 header {
@@ -35,155 +84,334 @@ header {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.2rem;
+  margin-bottom: 2.5rem;
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 header h1 {
   margin: 0;
-  font-size: 1.2rem;
-  letter-spacing: 0.4px;
+  font-size: 1.6rem;
+  letter-spacing: -0.5px;
   color: var(--text);
-}
-
-nav button {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: var(--muted);
-  padding: 8px 12px;
-  border-radius: 10px;
-  margin-left: 8px;
-  cursor: pointer;
-  transition: all .15s ease;
-}
-
-nav button:hover {
-  transform: translateY(-2px);
-  color: var(--text);
-  border-color: rgba(124, 92, 255, 0.6);
-  box-shadow: 0 6px 20px rgba(124, 92, 255, 0.06);
-}
-
-.card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  padding: 1.2rem;
-  border-radius: 12px;
-  box-shadow: 0 6px 30px rgba(2, 6, 23, 0.6);
-}
-
-h2 {
-  margin-top: 0;
-  color: var(--text);
-}
-
-label {
-  display: block;
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-input {
-  width: 100%;
-  padding: 10px 12px;
-  margin-top: 6px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  background: #0b1116;
-  color: var(--text);
-  outline: none;
-}
-
-input:focus {
-  box-shadow: 0 4px 18px rgba(124, 92, 255, 0.06);
-  border-color: rgba(124, 92, 255, 0.3);
-}
-
-button {
-  margin-top: 14px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 0;
-  cursor: pointer;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
-  color: #021022;
-  font-weight: 600;
-}
-
-button[disabled] {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-logout {
-  margin-top: 12px;
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.error {
-  color: var(--danger);
-  margin-top: 8px;
-}
-
-.info {
-  color: var(--success);
-  margin-top: 8px;
-  font-weight: 600;
-}
-
-/* Adicionar ao final do arquivo existente */
-
-/* Modal / pop-up */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(2, 6, 23, 0.6);
+  font-weight: 800;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 60;
+  gap: 10px;
 }
 
-.modal {
-  width: 420px;
-  max-width: calc(100% - 40px);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 20px;
-  border-radius: 12px;
-  color: var(--text);
-  box-shadow: 0 10px 40px rgba(2, 6, 23, 0.7);
-}
-
-.modal h3 {
-  margin: 0 0 8px 0;
-}
-
-.modal p {
-  margin: 0 0 16px 0;
-  color: var(--muted);
-}
-
-.modal-actions {
+/* Container do Topo - Distância padrão de 10px */
+header nav {
   display: flex;
-  gap: 8px;
-  justify-content: flex-end;
+  flex-direction: row;
+  gap: 10px;
 }
 
-.modal-actions button {
-  padding: 8px 12px;
+/* ==========================================================================
+   PADRONIZAÇÃO GLOBAL DE TODOS OS BOTÕES DO SISTEMA
+   ========================================================================== */
+header nav button,
+.card button,
+button[type="submit"],
+.btn-primary,
+.btn-secondary,
+.session-expired .button-group button {
+  height: 36px;
+  padding: 0 18px;
   border-radius: 8px;
-  border: 0;
-  cursor: pointer;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
-  color: #021022;
+  font-size: 0.85rem;
   font-weight: 600;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  margin: 0;
+  line-height: 1;
 }
 
-.modal-actions .btn-logout {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+/* Variação: Botões Padrão do Topo */
+header nav button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  backdrop-filter: blur(4px);
+}
+
+header nav button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Variação: Botão Sair - Vinculado à classe específica para não afetar o fluxo deslogado */
+header nav button.btn-logout {
+  background-color: var(--danger);
+  color: #ffffff;
+  border-color: var(--danger);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+header nav button.btn-logout:hover {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+/* ==========================================================================
+   CARD & INPUTS
+   ========================================================================== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  padding: 2.5rem 3rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 800px; 
+  margin: 0 auto;
+}
+
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--text);
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.card label {
+  display: block;
+  margin-top: 20px;
   color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card input {
+  width: 100%;
+  padding: 14px 16px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--text); 
+  outline: none;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.card input:focus {
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 3px rgba(143, 108, 255, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   ESTILOS ESPECÍFICOS DOS BOTÕES DE AÇÃO (CORES E SELEÇÃO)
+   ========================================================================== */
+
+/* Botão Primário (Salvar / Alterar Senha / Entrar / Refazer Login Padrão) */
+.card button:not(.btn-secondary), 
+button[type="submit"], 
+.btn-primary,
+.session-expired .button-group button:not(.btn-secondary) {
+  border: 1px solid transparent; 
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: var(--btn-text);
+  box-shadow: 0 4px 15px rgba(53, 230, 255, 0.2);
+  gap: 8px;
+}
+
+.card button:not(.btn-secondary):hover, 
+button[type="submit"]:hover, 
+.btn-primary:hover,
+.session-expired .button-group button:not(.btn-secondary):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(53, 230, 255, 0.4);
+  filter: brightness(1.1);
+}
+
+/* Botão Secundário (Cancelar / Fechar Modal) */
+.btn-secondary,
+.session-expired .button-group button.btn-secondary {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.btn-secondary:hover,
+.session-expired .button-group button.btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Espaçamento superior padrão caso o botão esteja sozinho no card */
+.card > button:not(.btn-secondary),
+.card > form > button:not(.btn-secondary) {
+  margin-top: 28px;
+}
+
+/* Painel de Alteração de Senha */
+.password-panel {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Container de botões lado a lado - Mantém os 10px exatos do topo */
+.password-panel-actions,
+.session-expired .button-group {
+  display: flex;
+  align-items: center;
+  gap: 10px; 
+  margin-top: 20px;
+}
+
+/* Limpa margens internas indesejadas no grupo de ações */
+.password-panel-actions button,
+.password-panel-actions .btn-primary,
+.password-panel-actions .btn-secondary,
+.session-expired .button-group button {
+  margin: 0 !important;
+}
+
+/* ==========================================================================
+   OUTROS COMPONENTES DO SISTEMA (MENSAGENS)
+   ========================================================================== */
+.error, .session-expired, .success {
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.error, .session-expired {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fecaca;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.05);
+  border-left: 4px solid var(--danger);
+}
+
+/* Classe .success adicionada para garantir a cor verde! */
+.success {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--success); 
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.05);
+  border-left: 4px solid var(--success);
+}
+
+.session-expired {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 2rem auto; 
+}
+
+.session-expired h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #fecaca;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.session-expired p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.info-box {
+  background: rgba(53, 230, 255, 0.05);
+  border: 1px solid rgba(53, 230, 255, 0.2);
+  border-radius: 12px;
+  padding: 16px 20px;
+  width: 100%;
+  max-width: 800px;
+  margin: 2rem auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 15px rgba(53, 230, 255, 0.05);
+}
+
+.info-box p {
+  color: var(--accent-2);
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.info-box::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background-color: var(--accent-2);
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 10px var(--accent-2);
+  animation: pulse-cyan 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-cyan {
+  0% { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 5px var(--accent-2); }
+  50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 15px var(--accent-2); }
+  100% { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 5px var(--accent-2); }
+}
+
+.dashboard-container, .profile-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.status-badge,
+.profile-details p,
+.profile-details span {
+  color: var(--muted); 
+  font-size: 1rem;
+  margin: 10px 0;
+}
+
+.profile-details strong {
+  color: var(--text); 
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   RESTAURAÇÃO DO COMPONENTE: TAG DE PERMISSÃO / ROLE DO USUÁRIO
+   ========================================================================== */
+.user-role-tag, 
+header h1 span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(53, 230, 255, 0.1);
+  color: var(--accent-2);
+  border: 1px solid rgba(53, 230, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: none;
 }

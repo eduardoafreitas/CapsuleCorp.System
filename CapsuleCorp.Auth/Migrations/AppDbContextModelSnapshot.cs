@@ -51,6 +51,39 @@ namespace CapsuleCorp.Auth.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("CapsuleCorp.Auth.Models.Role", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            Name = "Viewer"
+                        },
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000003"),
+                            Name = "Editor"
+                        });
+                });
+
             modelBuilder.Entity("CapsuleCorp.Auth.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -82,6 +115,21 @@ namespace CapsuleCorp.Auth.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("CapsuleCorp.Auth.Models.UserRole", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+                });
+
             modelBuilder.Entity("CapsuleCorp.Auth.Models.RefreshToken", b =>
                 {
                     b.HasOne("CapsuleCorp.Auth.Models.User", "User")
@@ -91,6 +139,30 @@ namespace CapsuleCorp.Auth.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CapsuleCorp.Auth.Models.UserRole", b =>
+                {
+                    b.HasOne("CapsuleCorp.Auth.Models.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CapsuleCorp.Auth.Models.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CapsuleCorp.Auth.Models.User", b =>
+                {
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

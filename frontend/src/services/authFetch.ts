@@ -1,100 +1,107 @@
-import { getAccessToken, getRefreshToken, saveTokens, clearTokens, refresh } from "./api";
+import { getAccessToken, getRefreshToken, saveTokens, clearTokens, headers } from "./api";
 
-/**
- * Decodifica JWT (sem validação) e retorna payload JSON.
- */
-function parseJwt(token?: string | null) {
-  if (!token) return null;
-  try {
-    const payload = token.split(".")[1];
-    const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-    return JSON.parse(decodeURIComponent(escape(decoded)));
-  } catch {
-    return null;
-  }
-}
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://localhost:5001";
 
-/**
- * Retorna true se o token expirar dentro de `secondsThreshold` segundos.
- */
-function tokenWillExpireSoon(token: string | null, secondsThreshold = 10) {
-  const payload = parseJwt(token);
-  if (!payload?.exp) return false;
-  const exp = payload.exp as number; // exp em segundos unix
-  const now = Math.floor(Date.now() / 1000);
-  return exp - now <= secondsThreshold;
-}
+type Pending = {
+  input: RequestInfo;
+  init?: RequestInit;
+  resolve: (value: Response | PromiseLike<Response>) => void;
+  reject: (reason?: any) => void;
+};
 
-/**
- * Wrapper fetch que:
- * - tenta pré-refresh se o access token estiver para expirar;
- * - faz a requisição com access token;
- * - em 401 tenta refresh + retry;
- * - em falha de refresh dispara event 'sessionExpired'.
- */
-export async function fetchWithAuth(input: RequestInfo, init?: RequestInit) {
-  const access = getAccessToken();
-  const refreshToken = getRefreshToken();
+let isRefreshing = false;
+let queue: Pending[] = [];
 
-  console.debug("[authFetch] iniciar requisição", input);
-
-  // Pré-refresh: se token vai expirar em breve, tenta refresh primeiro
-  if (access && refreshToken && tokenWillExpireSoon(access, 8)) {
-    console.debug("[authFetch] token expirando em breve, tentando refresh proativo");
-    const newTokens = await refresh(refreshToken).catch(() => null);
-    if (newTokens?.accessToken && newTokens?.refreshToken) {
-      saveTokens(newTokens.accessToken, newTokens.refreshToken);
-      console.debug("[authFetch] refresh proativo bem-sucedido");
-    } else {
-      console.debug("[authFetch] refresh proativo falhou");
-      // Se proativo falhou, deixamos seguir para a requisição (será 401) ou já notifica
-      // opcional: limpar tokens e notificar aqui:
-      // clearTokens(); window.dispatchEvent(new CustomEvent('sessionExpired'));
+function drainQueue(err: any | null) {
+  queue.forEach(p => {
+    if (err) p.reject(err);
+    else {
+      // Re-executa inserindo o novo token atualizado do LocalStorage
+      const retryInit: RequestInit = {
+        ...p.init,
+        headers: {
+          ...headers(),
+          ...(p.init?.headers || {})
+        }
+      };
+      fetch(p.input, retryInit).then(p.resolve).catch(p.reject);
     }
+  });
+  queue = [];
+}
+
+async function callRefresh(): Promise<boolean> {
+  const rToken = getRefreshToken();
+  if (!rToken) return false;
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/Auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: rToken })
+    });
+
+    if (!resp.ok) return false;
+
+    const data = await resp.json();
+    const accessToken = data?.accessToken ?? data?.token;
+    const refreshToken = data?.refreshToken;
+
+    if (accessToken) {
+      saveTokens(accessToken, refreshToken);
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
   }
+}
 
-  // Obtém o access token atualizado (pode ter sido trocado)
-  const currentAccess = getAccessToken();
-
-  const originalInit = init ? { ...init } : {};
-  originalInit.headers = {
-    ...(originalInit.headers as Record<string, string>),
-    "Content-Type": "application/json",
-    ...(currentAccess ? { Authorization: `Bearer ${currentAccess}` } : {})
+export async function fetchWithAuth(input: RequestInfo, init?: RequestInit): Promise<Response> {
+  // Constrói os cabeçalhos padrão incluindo o Bearer Token do LocalStorage automaticamente
+  const originalInit: RequestInit = {
+    ...init,
+    headers: {
+      ...headers(),
+      ...(init?.headers || {})
+    }
   };
 
-  let res = await fetch(input, originalInit);
-  console.debug("[authFetch] resposta inicial status", res.status, input);
+  let targetInput = input;
+  if (typeof input === "string" && !input.startsWith("http")) {
+    const sanitizedPath = input.startsWith("/") ? input : `/${input}`;
+    targetInput = `${API_BASE}${sanitizedPath}`;
+  }
 
+  let res = await fetch(targetInput, originalInit);
   if (res.status !== 401) return res;
 
-  // 401: tentar refresh reativo
-  const rt = getRefreshToken();
-  if (!rt) {
+  // Se cair aqui, o Token falhou (401). Iniciamos o fluxo de Refresh automático
+  if (isRefreshing) {
+    return new Promise<Response>((resolve, reject) => {
+      queue.push({ input: targetInput, init, resolve, reject });
+    });
+  }
+
+  isRefreshing = true;
+  const ok = await callRefresh();
+  isRefreshing = false;
+
+  if (!ok) {
     clearTokens();
+    drainQueue(new Error("Refresh falhou"));
     window.dispatchEvent(new CustomEvent("sessionExpired"));
     return res;
   }
 
-  console.debug("[authFetch] 401 recebido, tentando refresh reativo");
-  const newTokens = await refresh(rt).catch(() => null);
-  if (newTokens?.accessToken && newTokens?.refreshToken) {
-    saveTokens(newTokens.accessToken, newTokens.refreshToken);
-    console.debug("[authFetch] refresh reativo bem-sucedido, re-executando requisição");
-
-    const retryInit = init ? { ...init } : {};
-    retryInit.headers = {
-      ...(retryInit.headers as Record<string, string>),
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${newTokens.accessToken}`
-    };
-
-    return await fetch(input, retryInit);
-  }
-
-  // refresh falhou
-  clearTokens();
-  window.dispatchEvent(new CustomEvent("sessionExpired"));
-  console.debug("[authFetch] refresh reativo falhou -> sessão expirada");
-  return res;
+  drainQueue(null);
+  
+  // Refaz a requisição original com os novos tokens salvos
+  return fetch(targetInput, {
+    ...init,
+    headers: {
+      ...headers(),
+      ...(init?.headers || {})
+    }
+  });
 }

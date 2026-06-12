@@ -1,0 +1,296 @@
+using CapsuleCorp.Auth.DTOs;
+using CapsuleCorp.Auth.Interfaces;
+using CapsuleCorp.Auth.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+
+namespace CapsuleCorp.Auth.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class AuthController : ControllerBase
+    {
+        private readonly IAuthService _authService;
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
+
+        public AuthController(IAuthService authService, IConfiguration configuration, IWebHostEnvironment env)
+        {
+            _authService = authService;
+            _configuration = configuration;
+            _env = env;
+        }
+
+        private static UserResponseDto MapToDto(CapsuleCorp.Auth.Models.User user) =>
+            new UserResponseDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                CreateDate = user.CreateDate,
+                LastUpdateDate = user.LastUpdateDate
+            };
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        {
+            if (!(_authService is AuthService concrete))
+            {
+                var token = await _authService.LoginAsync(loginDto);
+                if (token == null) return Unauthorized(new { message = "E-mail ou senha inválidos." });
+                return Ok(new { message = "Login bem-sucedido." });
+            }
+
+            var tokens = await concrete.LoginWithTokensAsync(loginDto);
+            if (tokens == null) return Unauthorized(new { message = "E-mail ou senha inválidos." });
+
+            var isDev = _env.IsDevelopment();
+
+            var accessCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDev,
+                SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+                Expires = tokens.AccessExpiresAt
+            };
+
+            var refreshCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDev,
+                SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+                Expires = tokens.RefreshExpiresAt
+            };
+
+            Response.Cookies.Append("access_token", tokens.AccessToken ?? string.Empty, accessCookieOptions);
+            Response.Cookies.Append("refresh_token", tokens.RefreshToken ?? string.Empty, refreshCookieOptions);
+
+            // Retorna tokens também no corpo para compatibilidade em desenvolvimento
+            return Ok(new
+            {
+                message = "Login bem-sucedido.",
+                accessToken = tokens.AccessToken,
+                refreshToken = tokens.RefreshToken,
+                expiresAt = tokens.AccessExpiresAt
+            });
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var user = await _authService.RegisterAsync(dto);
+                var dtoResp = MapToDto(user);
+
+                return Ok(new
+                {
+                    message = "Usuário registrado com sucesso!",
+                    user = dtoResp
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] Dictionary<string, string>? body)
+        {
+            string? refreshToken = null;
+
+            // 1) tenta ler do cookie
+            if (Request.Cookies.TryGetValue("refresh_token", out var cookieToken) && !string.IsNullOrEmpty(cookieToken))
+            {
+                refreshToken = cookieToken;
+            }
+
+            // 2) se não veio no cookie, tenta ler do body com keys comuns
+            if (string.IsNullOrEmpty(refreshToken) && body != null)
+            {
+                if (body.TryGetValue("refreshToken", out var tokenFromBody) && !string.IsNullOrEmpty(tokenFromBody))
+                {
+                    refreshToken = tokenFromBody;
+                }
+                else if (body.TryGetValue("refresh_token", out var tokenFromBodyAlt) && !string.IsNullOrEmpty(tokenFromBodyAlt))
+                {
+                    refreshToken = tokenFromBodyAlt;
+                }
+            }
+
+            if (string.IsNullOrEmpty(refreshToken))
+                return BadRequest(new { message = "Refresh token ausente." });
+
+            if (!(_authService is AuthService concrete))
+                return StatusCode(501, new { message = "Refresh não implementado pela implementação atual de IAuthService." });
+
+            var tokens = await concrete.RefreshTokenAsync(refreshToken);
+            if (tokens == null) return Unauthorized(new { message = "Refresh token inválido ou expirado." });
+
+            var isDev = _env.IsDevelopment();
+
+            var accessCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDev,
+                SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+                Expires = tokens.AccessExpiresAt
+            };
+
+            var refreshCookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !isDev,
+                SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+                Expires = tokens.RefreshExpiresAt
+            };
+
+            Response.Cookies.Append("access_token", tokens.AccessToken ?? string.Empty, accessCookieOptions);
+            Response.Cookies.Append("refresh_token", tokens.RefreshToken ?? string.Empty, refreshCookieOptions);
+
+            return Ok(new
+            {
+                message = "Tokens atualizados.",
+                accessToken = tokens.AccessToken,
+                refreshToken = tokens.RefreshToken,
+                expiresAt = tokens.AccessExpiresAt
+            });
+        }
+
+        [HttpPost("revoke")]
+        public async Task<IActionResult> Revoke([FromBody] Dictionary<string, string>? body)
+        {
+            string? refreshToken = null;
+
+            if (Request.Cookies.TryGetValue("refresh_token", out var cookieToken) && !string.IsNullOrEmpty(cookieToken))
+            {
+                refreshToken = cookieToken;
+            }
+
+            if (string.IsNullOrEmpty(refreshToken) && body != null)
+            {
+                if (body.TryGetValue("refreshToken", out var tokenFromBody) && !string.IsNullOrEmpty(tokenFromBody))
+                {
+                    refreshToken = tokenFromBody;
+                }
+                else if (body.TryGetValue("refresh_token", out var tokenFromBodyAlt) && !string.IsNullOrEmpty(tokenFromBodyAlt))
+                {
+                    refreshToken = tokenFromBodyAlt;
+                }
+            }
+
+            if (string.IsNullOrEmpty(refreshToken))
+                return BadRequest(new { message = "Refresh token ausente." });
+
+            if (!(_authService is AuthService concrete))
+                return StatusCode(501, new { message = "Revoke não implementado pela implementação atual de IAuthService." });
+
+            var ok = await concrete.RevokeRefreshTokenAsync(refreshToken);
+
+            Response.Cookies.Delete("access_token");
+            Response.Cookies.Delete("refresh_token");
+
+            if (!ok) return NotFound(new { message = "Token não encontrado ou já revogado." });
+            return Ok(new { message = "Refresh token revogado." });
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] Dictionary<string, string>? body)
+        {
+            string? refreshToken = null;
+
+            if (Request.Cookies.TryGetValue("refresh_token", out var cookieToken) && !string.IsNullOrEmpty(cookieToken))
+            {
+                refreshToken = cookieToken;
+            }
+
+            if (string.IsNullOrEmpty(refreshToken) && body != null)
+            {
+                if (body.TryGetValue("refreshToken", out var tokenFromBody) && !string.IsNullOrEmpty(tokenFromBody))
+                {
+                    refreshToken = tokenFromBody;
+                }
+                else if (body.TryGetValue("refresh_token", out var tokenFromBodyAlt) && !string.IsNullOrEmpty(tokenFromBodyAlt))
+                {
+                    refreshToken = tokenFromBodyAlt;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(refreshToken) && _authService is AuthService concrete)
+            {
+                try
+                {
+                    await concrete.RevokeRefreshTokenAsync(refreshToken);
+                }
+                catch { /* não bloquear logout por erro de revoke */ }
+            }
+
+            Response.Cookies.Delete("access_token");
+            Response.Cookies.Delete("refresh_token");
+
+            return Ok(new { message = "Logout concluído." });
+        }
+
+        [Authorize]
+        [HttpPut("update-profile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto dto)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Unauthorized(new { message = "Identificador do usuário não encontrado no token." });
+
+                var userId = Guid.Parse(userIdClaim);
+                var updatedUser = await _authService.UpdateUserAsync(userId, dto);
+
+                var dtoResp = MapToDto(updatedUser);
+
+                var fusoBrasilia = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+                var dataLocal = TimeZoneInfo.ConvertTimeFromUtc(updatedUser.LastUpdateDate ?? DateTime.UtcNow, fusoBrasilia);
+
+                return Ok(new
+                {
+                    message = "Perfil atualizado com sucesso!",
+                    user = dtoResp,
+                    updatedAtLocal = dataLocal.ToString("yyyy-MM-dd HH:mm:ss.fffffff")
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMe()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+                return Unauthorized(new { message = "Identificador do usuário não encontrado no token." });
+
+            var userId = Guid.Parse(userIdClaim);
+            var user = await _authService.GetByIdAsync(userId);
+
+            if (user == null) return NotFound(new { message = "Usuário não encontrado." });
+
+            return Ok(MapToDto(user));
+        }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult GetDadosProtegidos()
+        {
+            return Ok("Você só vê isso porque o Program.cs validou seu Token!");
+        }
+    }
+}

@@ -1,14 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CapsuleCorp.Auth.Models
 {
     public class User
     {
-        [Key] // Define explicitamente como chave primária
+        [Key]
         public Guid Id { get; set; }
 
         [Required(ErrorMessage = "O nome é obrigatório")]
-        [MaxLength(100)] // Evita que alguém envie um texto gigantesco e quebre o banco
+        [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "O email é obrigatório")]
@@ -22,5 +22,7 @@ namespace CapsuleCorp.Auth.Models
         public DateTime CreateDate { get; set; } = DateTime.UtcNow;
 
         public DateTime? LastUpdateDate { get; set; }
+
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     }
 }
