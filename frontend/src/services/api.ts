@@ -33,7 +33,8 @@ function normalizeAuthResponse(obj: any, statusCode: number) {
       accessToken: null, 
       refreshToken: null, 
       success: statusCode >= 200 && statusCode < 300,
-      message: statusCode >= 200 && statusCode < 300 ? "Sucesso." : "Não autenticado."
+      message: statusCode >= 200 && statusCode < 300 ? "Sucesso." : "Não autenticado.",
+      roles: [] as string[]
     };
   }
   
@@ -75,5 +76,23 @@ export async function login(payload: { email: string; password: string }) {
     return normalizeAuthResponse(json, res.status);
   } catch {
     return normalizeAuthResponse(null, 503);
+  }
+}
+
+export async function getMe() {
+  try {
+    const res = await fetch(`${API_BASE}/api/Auth/me`, {
+      method: "GET",
+      headers: headers(), // Anexa o Bearer Token automaticamente
+    });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    return await res.json(); // Retorna o DTO do usuário vindo do .NET
+  } catch (error) {
+    console.error("Erro ao buscar dados do endpoint /me:", error);
+    return null;
   }
 }

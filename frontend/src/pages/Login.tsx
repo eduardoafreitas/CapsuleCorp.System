@@ -1,7 +1,11 @@
 ﻿import React, { useState } from "react";
 import { login, saveTokens } from "../services/api";
 
-export default function Login({ onLogin }: { onLogin: () => void }) {
+interface LoginProps {
+  onLogin: (roles: string[]) => void;
+}
+
+export default function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
@@ -19,7 +23,6 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
       
       console.log("Debug do retorno normalizado recebido no componente:", res);
 
-      // 💡 CORRIGIDO: Agora confiamos 100% no booleano unificado vindo do api.ts
       if (res && res.success) {
         // Salva os tokens vindos na resposta estruturada
         saveTokens(res.accessToken, res.refreshToken);
@@ -27,9 +30,12 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
         setIsError(false);
         setMsg(res.message || "Login bem-sucedido.");
         
+        // Lê direto as roles normalizadas pela nossa API tipada
+        const rolesDoUsuario = res.roles || [];
+        
         // Mantém o pequeno delay opcional para o usuário ver o feedback visual de sucesso
         setTimeout(() => { 
-          onLogin(); 
+          onLogin(rolesDoUsuario); // Passando as roles de volta para o App.tsx!
         }, 1000);
       } else {
         setIsError(true);
@@ -65,7 +71,6 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
         onChange={e => setEmail(e.target.value)}
       />
       
-      {/* Adicionado o atributo 'required' para evitar submissões vazias à toa */}
       <label htmlFor="login-password">Senha</label>
       <input
         id="login-password"

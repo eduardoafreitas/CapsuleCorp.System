@@ -15,7 +15,13 @@ interface Telemetry {
   chillerWaterFlowLpm: number;
 }
 
-export default function Dashboard() {
+// 1. Criamos a interface para as propriedades do Dashboard
+interface DashboardProps {
+  userRoles?: string[];
+}
+
+// 2. Modificamos a assinatura para receber as userRoles (padrão vazio caso venha undefined)
+export default function Dashboard({ userRoles = [] }: DashboardProps) {
   const [telemetryData, setTelemetryData] = useState<Telemetry[]>([]);
   const [loading, setLoading] = useState(true);
   const [criticalAlert, setCriticalAlert] = useState<Telemetry | null>(null);
@@ -108,13 +114,15 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {/* Botão corrigido usando a classe CSS btn-secondary */}
-        <button 
-          className="btn-secondary"
-          onClick={() => setDebugLoading(true)}
-        >
-          🔧 Testar Tela de Conexão
-        </button>
+        {/* O botão agora só renderiza se o usuário for Admin ou Editor */}
+        {(userRoles.includes("Admin") || userRoles.includes("Editor")) && (
+          <button 
+            className="btn-secondary"
+            onClick={() => setDebugLoading(true)}
+          >
+            🔧 Testar Tela de Conexão
+          </button>
+        )}
       </div>
 
       <div className="telemetry-grid">

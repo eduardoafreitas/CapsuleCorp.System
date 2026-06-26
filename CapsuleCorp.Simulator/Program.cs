@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -15,7 +15,7 @@ namespace CapsuleCorp.Simulator
 
         private static readonly List<string> Fleet = new List<string> { "RMN-SPO-001", "RMN-RJO-002", "RMN-BHE-003", "RMN-CWB-004" };
 
-        // ColeÃ§Ãµes dinÃ¢micas de falhas ativas
+        // Coleções dinâmicas de falhas ativas
         private static readonly HashSet<string> ActiveCompressorFaults = new HashSet<string>();
         private static readonly HashSet<string> ActiveChillerFaults = new HashSet<string>();
         private static readonly HashSet<string> ActivePowerFaults = new HashSet<string>();
@@ -23,7 +23,7 @@ namespace CapsuleCorp.Simulator
 
         private static readonly Dictionary<string, int> FaultStepCounters = new Dictionary<string, int>();
 
-        // Assinaturas FÃ­sicas EstÃ¡ticas
+        // Assinaturas Fí­sicas Estáticas
         private static readonly double[] ProfileGradientCurrent = { 5.0, 120.0, 245.0, 245.0, 180.0, 15.0, 140.0, 210.0, 210.0, 90.0, 5.0, 230.0, 230.0, 110.0, 5.0 };
         private static readonly double[] ProfileCpuTemperature = { 42.5, 48.0, 59.5, 64.0, 61.5, 46.0, 53.0, 60.5, 65.0, 55.0, 44.0, 62.0, 66.0, 51.0, 43.0 };
         private static readonly double[] ProfileGantryVibration = { 0.02, 0.45, 1.12, 1.25, 0.88, 0.05, 0.62, 0.95, 1.05, 0.32, 0.02, 1.18, 1.30, 0.55, 0.02 };
@@ -40,7 +40,7 @@ namespace CapsuleCorp.Simulator
                 _ = Task.Run(() => TelemetryExecutionLoop(id));
             }
 
-            // Loop de renderizaÃ§Ã£o da interface do usuÃ¡rio
+            // Loop de renderização da interface do usuário
             while (true)
             {
                 DesenharPainelConsole();
@@ -73,7 +73,7 @@ namespace CapsuleCorp.Simulator
             Console.WriteLine("=========================================================");
             Console.ResetColor();
 
-            // Painel DinÃ¢mico que exibe o estado de cada mÃ¡quina para o PortfÃ³lio
+            // Painel Dinâmico que exibe o estado de cada máquina
             Console.WriteLine("\n--- MONITOR DE ESTADO DA FROTA AO VIVO ---");
             foreach (var id in Fleet)
             {
@@ -87,43 +87,43 @@ namespace CapsuleCorp.Simulator
                 if (falhasAtivas.Count > 0)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"ANOMALIA ({string.Join(", ", falhasAtivas)}) ðŸ”´");
+                    Console.WriteLine($"ANOMALIA ({string.Join(", ", falhasAtivas)}) ❌");
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("OPERACIONAL MISTO ðŸŸ¢");
+                    Console.WriteLine("OPERACIONAL MISTO ✅");
                 }
                 Console.ResetColor();
             }
 
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine("\n---------------------------------------------------------");
-            Console.WriteLine("InjeÃ§Ã£o de Anomalias - Selecione a falha desejada:");
-            Console.WriteLine("[1] Falha CrÃ­tica de Compressor (Fervura de HÃ©lio)");
-            Console.WriteLine("[2] InterrupÃ§Ã£o de Fluxo no Chiller");
-            Console.WriteLine("[3] FlutuaÃ§Ã£o ElÃ©trica na Rede TrifÃ¡sica");
-            Console.WriteLine("[4] Falha de ClimatizaÃ§Ã£o na Sala HVAC");
+            Console.WriteLine("Injeção de Anomalias - Selecione a falha desejada:");
+            Console.WriteLine("[1] Falha Crí­tica de Compressor (Fervura de Hélio)");
+            Console.WriteLine("[2] Interrupção de Fluxo no Chiller");
+            Console.WriteLine("[3] Flutuação Elétrica na Rede Trifásica");
+            Console.WriteLine("[4] Falha de Climatização na Sala HVAC");
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("[ESC] Encerrar Simulador");
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine("---------------------------------------------------------");
-            Console.Write("Escolha uma opÃ§Ã£o (1-4): ");
+            Console.Write("Escolha uma opção (1-4): ");
             Console.ResetColor();
         }
 
         private static string SelecionarEquipamento()
         {
-            Console.WriteLine("\n\nSelecione o nÃºmero da mÃ¡quina alvo:");
+            Console.WriteLine("\n\nSelecione o número da máquina alvo:");
             for (int i = 0; i < Fleet.Count; i++)
             {
                 Console.WriteLine($"[{i + 1}] {Fleet[i]}");
             }
-            Console.Write("NÃºmero: ");
+            Console.Write("Número: ");
 
             var entrada = Console.ReadKey(true).Key;
 
-            // Mapeamento correto independente do teclado numÃ©rico lateral ou superior
+            // Mapeamento correto independente do teclado numérico lateral ou superior
             int index = -1;
             if (entrada >= ConsoleKey.D1 && entrada <= ConsoleKey.D4) index = entrada - ConsoleKey.D1;
             else if (entrada >= ConsoleKey.NumPad1 && entrada <= ConsoleKey.NumPad4) index = entrada - ConsoleKey.NumPad1;
@@ -134,7 +134,7 @@ namespace CapsuleCorp.Simulator
             }
 
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\nâš ï¸ SeleÃ§Ã£o invÃ¡lida. Retornando ao menu...");
+            Console.WriteLine("\nâš ï¸ Seleção inválida. Retornando ao menu...");
             Thread.Sleep(1200);
             Console.ResetColor();
             return string.Empty;
@@ -243,7 +243,7 @@ namespace CapsuleCorp.Simulator
                     chillerFlow = Math.Min(52.5, chillerFlow + 5.0);
                 }
 
-                // 3. Instabilidade ElÃ©trica
+                // 3. Instabilidade Elétrica
                 if (ActivePowerFaults.Contains(equipmentId))
                 {
                     overallStatus = overallStatus == "Critical" ? "Critical" : "Alert";
@@ -288,7 +288,7 @@ namespace CapsuleCorp.Simulator
                 {
                     await _httpClient.PostAsJsonAsync(_apiUrl, payload);
                 }
-                catch { /* TransmissÃ£o em segundo plano mantida em silÃªncio */ }
+                catch { /* Transmissão em segundo plano mantida em silêncio */ }
 
                 await Task.Delay(2000);
             }

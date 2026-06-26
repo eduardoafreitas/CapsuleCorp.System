@@ -1,4 +1,4 @@
-﻿﻿import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
@@ -31,11 +31,17 @@ export default function App() {
   // Validação inicial ao carregar o App (F5) ou abrir o sistema
   useEffect(() => {
     async function checkSession() {
+      
+      if (route === "login") {
+      setUserRoles([]);
+      return;
+      } 
+      
       try {
         const res = await fetchWithAuth("/api/Auth/me");
         if (res.ok) {
           const userData = await res.json();
-          // 💡 Captura o array de roles retornado do backend e salva no estado
+          // Captura o array de roles retornado do backend e salva no estado
           setUserRoles(userData.roles || []);
           setRoute("dashboard"); // Usuário logado cai direto no Dashboard com segurança
         } else {
@@ -91,81 +97,75 @@ export default function App() {
   // Define se o usuário está em um estado autenticado para simplificar as condicionais
   const isUserLoggedIn = route === "dashboard" || route === "profile";
 
- return (
-  <div className="app">
-    <header>
-      <h1>
-        CapsuleCorp System 
-        {/* Marcador sutil integrado com a classe de estilo do ecossistema */}
-        {isUserLoggedIn && userRoles.length > 0 && (
-          <span className="user-role-tag">
-            [{userRoles.join(", ")}]
-          </span>
-        )}
-      </h1>
-      <nav>
-        {/* BOTÃO DO TEMA SEMPRE VISÍVEL (Independente de estar logado ou não) */}
-        <button 
-          onClick={toggleTheme} 
-          title={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
-          style={{ fontSize: '1.2rem', padding: '0 12px' }}
-        >
-          {theme === 'dark' ? '💡' : '🌙'}
-        </button>
-
-        {/* Se o usuário NÃO está logado, mostra APENAS Login e Cadastrar */}
-        {!isUserLoggedIn && (
-          <>
-            <button className={route === "login" ? "active" : ""} onClick={() => setRoute("login")}>Login</button>
-            <button className={route === "register" ? "active" : ""} onClick={() => setRoute("register")}>Cadastrar</button>
-          </>
-        )}
-
-        {/* Se o usuário ESTIVER logado, mostra Dashboard, Perfil e Sair */}
-        {isUserLoggedIn && (
-          <>
-            <button className={route === "dashboard" ? "active" : ""} onClick={() => setRoute("dashboard")}>Dashboard</button>
-            <button className={route === "profile" ? "active" : ""} onClick={() => setRoute("profile")}>Perfil</button>
-            <button onClick={handleLogout} className="btn-logout">
-              Sair
-            </button>
-          </>
-        )}
-      </nav>
-    </header>
-
-    {/* SUB-MENU: Botão na posição idêntica à original */}
-    {isUserLoggedIn && route === "dashboard" && (
-      <div style={{ display: "flex", justifyContent: "flex-end", maxWidth: "800px", margin: "-1.5rem auto 1.5rem auto" }}>
-        
-        {/* 💡 Regra de negócio: O botão de testes só aparece para Admin ou Editor */}
-        {(userRoles.includes("Admin") || userRoles.includes("Editor")) && (
-          <button className="btn-secondary" onClick={() => alert("Testando conexão...")}>
-            🔧 Testar Tela de Conexão
+  return (
+    <div className="app">
+      <header>
+        <h1>
+          CapsuleCorp System
+          {/* Marcador sutil integrado com a classe de estilo do ecossistema */}
+          {isUserLoggedIn && userRoles.length > 0 && (
+            <span className="user-role-tag">
+              [{userRoles.join(", ")}]
+            </span>
+          )}
+        </h1>
+        <nav>
+          {/* BOTÃO DO TEMA SEMPRE VISÍVEL (Independente de estar logado ou não) */}
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
+            style={{ fontSize: '1.2rem', padding: '0 12px' }}
+          >
+            {theme === 'dark' ? '💡' : '🌙'}
           </button>
-        )}
-        
-      </div>
-    )}
-    
-    {sessionExpired && (
-      <div className="session-expired">
-        <h3>Sessão expirada</h3>
-        <p>Seu token expirou. Deseja refazer o login para continuar?</p>
-        <div className="button-group">
-          <button onClick={handleRelogin}>Refazer login</button>
-          <button onClick={() => setSessionExpired(false)} className="btn-secondary">Fechar</button>
-        </div>
-      </div>
-    )}
 
-    <main>
-      {/* Ao fazer login ou cadastrar com sucesso, jogamos o usuário direto para o Dashboard */}
-      {route === "login" && <Login onLogin={() => { setSessionExpired(false); setRoute("dashboard"); }} />}
-      {route === "register" && <Register onRegister={() => { setSessionExpired(false); setRoute("dashboard"); }} />}
-      {route === "profile" && <Profile />}
-      {route === "dashboard" && <Dashboard />}
-    </main>
-  </div>
-);
+          {/* Se o usuário NÃO está logado, mostra APENAS Login e Cadastrar */}
+          {!isUserLoggedIn && (
+            <>
+              <button className={route === "login" ? "active" : ""} onClick={() => setRoute("login")}>Login</button>
+              <button className={route === "register" ? "active" : ""} onClick={() => setRoute("register")}>Cadastrar</button>
+            </>
+          )}
+
+          {/* Se o usuário ESTIVER logado, mostra Dashboard, Perfil e Sair */}
+          {isUserLoggedIn && (
+            <>
+              <button className={route === "dashboard" ? "active" : ""} onClick={() => setRoute("dashboard")}>Dashboard</button>
+              <button className={route === "profile" ? "active" : ""} onClick={() => setRoute("profile")}>Perfil</button>
+              <button onClick={handleLogout} className="btn-logout">
+                Sair
+              </button>
+            </>
+          )}
+        </nav>
+      </header>
+
+      {sessionExpired && (
+        <div className="session-expired">
+          <h3>Sessão expirada</h3>
+          <p>Seu token expirou. Deseja refazer o login para continuar?</p>
+          <div className="button-group">
+            <button onClick={handleRelogin}>Refazer login</button>
+            <button onClick={() => setSessionExpired(false)} className="btn-secondary">Fechar</button>
+          </div>
+        </div>
+      )}
+
+      <main>
+        {/* Ao fazer login ou cadastrar com sucesso, jogamos o usuário direto para o Dashboard */}
+        {route === "login" && (
+          <Login
+            onLogin={(roles: string[]) => {
+              setSessionExpired(false);
+              setUserRoles(roles || []);
+              setRoute("dashboard");
+            }}
+          />
+        )}
+        {route === "register" && <Register onRegister={() => { setSessionExpired(false); setRoute("dashboard"); }} />}
+        {route === "profile" && <Profile />}
+        {route === "dashboard" && <Dashboard userRoles={userRoles}/>}
+      </main>
+    </div>
+  );
 }

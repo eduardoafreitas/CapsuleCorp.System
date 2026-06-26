@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 
-// 🚀 ADICIONADO: Configuração estrita do Middleware de Autenticação JWT
+// ADICIONADO: Configuração estrita do Middleware de Autenticação JWT
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("A chave 'Jwt:Key' não foi configurada no Monitor.API.");
 
@@ -33,7 +33,7 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero // Remove os 5 minutos de tolerância padrão para validação imediata
     };
 
-    // 💡 IMPORTANTE: Permite que o SignalR leia o token enviado via QueryString/Factory pelo Front-end
+    // IMPORTANTE: Permite que o SignalR leia o token enviado via QueryString/Factory pelo Front-end
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -76,7 +76,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("FrontendPolicy");
 
-// 🚀 ADICIONADO: A ordem aqui importa! Primeiro se Autentica (quem você é), depois Autoriza (o que pode fazer)
+// ADICIONADO: A ordem aqui importa! Primeiro se Autentica (quem você é), depois Autoriza (o que pode fazer)
 app.UseAuthentication();
 app.UseAuthorization();
 
