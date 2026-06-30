@@ -4,7 +4,7 @@
 [![EF Core](https://img.shields.io/badge/EF%20Core-9.0-blue)](https://learn.microsoft.com/ef/core/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-API de autenticação desenvolvida em .NET 9, com foco em segurança, arquitetura limpa e integração com aplicações web modernas.
+Plataforma de observabilidade e telemetria IoT em tempo real. Ecossistema full-stack integrado com .NET 9, SignalR, PostgreSQL e React/TypeScript, com simulador de frotas e injeção de anomalias operacionais.
 
 ## 🚀 Status do Projeto
 
