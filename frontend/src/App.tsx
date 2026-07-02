@@ -3,13 +3,15 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
-import { clearTokens } from "./services/api";
+import { Icon } from "./components/Icon";
+import { useAuth } from "./auth/AuthContext";
+import { can } from "./auth/permissions";
 import { fetchWithAuth } from "./services/authFetch";
+import AdminUsers from "./pages/AdminUsers";
 
 export default function App() {
-  const [route, setRoute] = useState<"login" | "register" | "profile" | "dashboard" | "loading">("loading");
-  const [sessionExpired, setSessionExpired] = useState(false);
-  const [userRoles, setUserRoles] = useState<string[]>([]); // 💡 Estado novo: Armazena a lista de roles do usuário
+  const [route, setRoute] = useState<"login" | "register" | "profile" | "dashboard" | "admin-users" | "loading">("loading");
+  const { userRoles, sessionExpired, setSessionExpired, hydrateAuthenticatedSession, clearSession } = useAuth();
 
   // ==========================================================================
   // LÓGICA DO TEMA (Executada imediatamente ao carregar o componente)
@@ -33,56 +35,28 @@ export default function App() {
     async function checkSession() {
       
       if (route === "login") {
-      setUserRoles([]);
+      clearSession();
       return;
       } 
       
-      try {
-        const res = await fetchWithAuth("/api/Auth/me");
-        if (res.ok) {
-          const userData = await res.json();
-          // Captura o array de roles retornado do backend e salva no estado
-          setUserRoles(userData.roles || []);
-          setRoute("dashboard"); // Usuário logado cai direto no Dashboard com segurança
-        } else {
-          clearTokens();
-          setUserRoles([]);
-          setRoute("login");
-        }
-      } catch {
-        clearTokens();
-        setUserRoles([]);
-        setRoute("login");
-      }
+      const isAuthenticated = await hydrateAuthenticatedSession();
+      setRoute(isAuthenticated ? "dashboard" : "login");
     }
     checkSession();
-  }, []);
-
-  // Ouvinte para sessão expirada (Event disparado pelo interceptor/fetch)
-  useEffect(() => {
-    function onSessionExpired() {
-      setSessionExpired(true);
-    }
-    window.addEventListener("sessionExpired", onSessionExpired as EventListener);
-    return () => window.removeEventListener("sessionExpired", onSessionExpired as EventListener);
-  }, []);
+  }, [clearSession, hydrateAuthenticatedSession]);
 
   // Executa o Logout Limpando a Sessão de forma segura
   async function handleLogout() {
     try {
       await fetchWithAuth("/api/Auth/logout", { method: "POST" }).catch(() => null);
     } finally {
-      clearTokens(); // Remove os tokens do localStorage
-      setUserRoles([]); // Limpa as roles do estado
-      setSessionExpired(false); // Garante que fecha o modal se estiver aberto
+      clearSession(); // Remove tokens e estado autenticado
       setRoute("login"); // Joga o usuário de volta para o Login
     }
   }
 
   function handleRelogin() {
-    clearTokens();
-    setUserRoles([]);
-    setSessionExpired(false);
+    clearSession();
     setRoute("login");
   }
 
@@ -95,7 +69,7 @@ export default function App() {
   }
 
   // Define se o usuário está em um estado autenticado para simplificar as condicionais
-  const isUserLoggedIn = route === "dashboard" || route === "profile";
+  const isUserLoggedIn = route === "dashboard" || route === "profile" || route === "admin-users";
 
   return (
     <div className="app">
@@ -112,11 +86,12 @@ export default function App() {
         <nav>
           {/* BOTÃO DO TEMA SEMPRE VISÍVEL (Independente de estar logado ou não) */}
           <button
+            className="icon-button"
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
-            style={{ fontSize: '1.2rem', padding: '0 12px' }}
+            aria-label={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
           >
-            {theme === 'dark' ? '💡' : '🌙'}
+            <Icon name={theme === "dark" ? "sun" : "moon"} />
           </button>
 
           {/* Se o usuário NÃO está logado, mostra APENAS Login e Cadastrar */}
@@ -130,9 +105,22 @@ export default function App() {
           {/* Se o usuário ESTIVER logado, mostra Dashboard, Perfil e Sair */}
           {isUserLoggedIn && (
             <>
-              <button className={route === "dashboard" ? "active" : ""} onClick={() => setRoute("dashboard")}>Dashboard</button>
-              <button className={route === "profile" ? "active" : ""} onClick={() => setRoute("profile")}>Perfil</button>
+              <button className={route === "dashboard" ? "active" : ""} onClick={() => setRoute("dashboard")}>
+                <Icon name="activity" />
+                Dashboard
+              </button>
+              <button className={route === "profile" ? "active" : ""} onClick={() => setRoute("profile")}>
+                <Icon name="user" />
+                Perfil
+              </button>
+              {can(userRoles, "users:manage") && (
+                <button className={route === "admin-users" ? "active" : ""} onClick={() => setRoute("admin-users")}>
+                  <Icon name="lock" />
+                  Usuarios
+                </button>
+              )}
               <button onClick={handleLogout} className="btn-logout">
+                <Icon name="logOut" />
                 Sair
               </button>
             </>
@@ -156,15 +144,24 @@ export default function App() {
         {route === "login" && (
           <Login
             onLogin={(roles: string[]) => {
-              setSessionExpired(false);
-              setUserRoles(roles || []);
-              setRoute("dashboard");
+              hydrateAuthenticatedSession(roles || []).then(isAuthenticated => {
+                setRoute(isAuthenticated ? "dashboard" : "login");
+              });
             }}
           />
         )}
-        {route === "register" && <Register onRegister={() => { setSessionExpired(false); setRoute("dashboard"); }} />}
+        {route === "register" && (
+          <Register
+            onRegister={(roles: string[]) => {
+              hydrateAuthenticatedSession(roles || []).then(isAuthenticated => {
+                setRoute(isAuthenticated ? "dashboard" : "login");
+              });
+            }}
+          />
+        )}
         {route === "profile" && <Profile />}
-        {route === "dashboard" && <Dashboard userRoles={userRoles}/>}
+        {route === "admin-users" && <AdminUsers />}
+        {route === "dashboard" && <Dashboard />}
       </main>
     </div>
   );

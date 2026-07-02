@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
+import { Icon } from "../components/Icon";
 import { getMe } from "../services/api";
 
 // Interface para tipar os dados do usuário que vêm da API .NET
@@ -86,7 +87,8 @@ export default function Perfil() {
             style={{ marginTop: "24px" }}
             onClick={() => setIsChangingPassword(true)}
           >
-            🔒 Alterar Senha
+            <Icon name="lock" />
+            Alterar Senha
           </button>
         )}
 

@@ -3,59 +3,144 @@
 /* ==========================================================================
    TEMA DARK ORIGINAL
    ========================================================================== */
-html {
+
+   html {
   --bg: #0b1120;
   --card: #111827;
   --card-border: rgba(255, 255, 255, 0.1);
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --input-bg: rgba(0, 0, 0, 0.2);
   --text: #f8fafc;
   --muted: #94a3b8; 
   --accent-1: #8f6cff;
   --accent-2: #35e6ff;
+  --accent-soft: rgba(53, 230, 255, 0.1);
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
   --btn-text: #040914; 
+  --metric-bg: rgba(255, 255, 255, 0.02);
+  --heading-border: var(--accent-2);
+  --alert-bg: rgba(239, 68, 68, 0.08);
+  --alert-border: rgba(239, 68, 68, 0.3);
+  --alert-text: #fecaca; /* O rosa claro original lê perfeitamente no escuro */
+  --alert-title: #fecaca;
+  --alert-details-bg: rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 10px 25px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 8px 25px rgba(0, 0, 0, 0.5);
+  --shadow-button: 0 4px 15px rgba(53, 230, 255, 0.2);
+
   color-scheme: dark;
 }
 
 /* ==========================================================================
    TEMA LIGHT (Ativado apenas via JavaScript)
    ========================================================================== */
-html[data-theme="light"] {
-  --bg: #d1d8e0;
-  --card: #ffffff; 
-  --card-border: rgba(11, 17, 32, 0.15); 
-  --text: #0b1120; 
-  --muted: #475569; 
-  --accent-1: #0b1120; 
-  --accent-2: #111827; 
-  --btn-text: #ffffff; 
+
+   html[data-theme="light"] {
+  --bg: #f3f7fb;
+  --card: #ffffff;
+  --card-border: #d7e0ea;
+  --surface: #edf3f8;
+  --surface-hover: #e2ebf4;
+  --input-bg: #ffffff;
+  --text: #0f172a;
+  --muted: #475569;
+  --accent-1: #1d4ed8;
+  --accent-2: #0284c7;
+  --accent-soft: #e0f2fe;
+  --success: #059669;
+  --danger: #dc2626;
+  --warning: #b45309;
+  --btn-text: #ffffff;
+  --metric-bg: #f6f8fb;
+  --heading-border: #0284c7;
+  --alert-bg: #fef2f2;
+  --alert-border: #fecaca;
+  --alert-text: #7f1d1d;
+  --alert-title: #b91c1c;
+  --alert-details-bg: #fff7f7;
+  --shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --shadow-card-hover: 0 18px 45px rgba(15, 23, 42, 0.14);
+  --shadow-button: 0 8px 18px rgba(2, 132, 199, 0.18);
+
   color-scheme: light;
+}
+
+html[data-theme="light"] header h1 {
+  text-shadow: none;
+}
+
+html[data-theme="light"] body,
+html[data-theme="light"] #root {
+  background:
+    linear-gradient(180deg, #eef5fb 0%, #f8fafc 58%, #f3f7fb 100%);
 }
 
 html[data-theme="light"] header nav button,
 html[data-theme="light"] .btn-secondary {
-  background: rgba(11, 17, 32, 0.05);
-  border-color: rgba(11, 17, 32, 0.2);
+  background: var(--card);
+  border-color: var(--card-border);
   color: var(--text);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
 html[data-theme="light"] header nav button:hover,
 html[data-theme="light"] .btn-secondary:hover {
-  background: rgba(11, 17, 32, 0.1);
+  background: var(--surface-hover);
+  border-color: #b7c6d6;
+}
+
+html[data-theme="light"] header nav button.active {
+  background: var(--accent-soft);
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+html[data-theme="light"] header nav button.btn-logout {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+  box-shadow: 0 6px 16px rgba(225, 29, 72, 0.10);
+}
+
+html[data-theme="light"] header nav button.btn-logout:hover {
+  background: #ffe4e6;
+  border-color: #fda4af;
+  color: #9f1239;
 }
 
 html[data-theme="light"] .card input {
-  background-color: #ffffff;
-  border-color: rgba(11, 17, 32, 0.2);
+  background-color: var(--input-bg);
+  border-color: var(--card-border);
   color: var(--text);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 html[data-theme="light"] .card input:focus {
-  border-color: #0b1120;
-  box-shadow: 0 0 0 3px rgba(11, 17, 32, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
 }
+
+html[data-theme="light"] .telemetry-card,
+html[data-theme="light"] .card,
+html[data-theme="light"] .modal {
+  box-shadow: var(--shadow-card);
+}
+
+html[data-theme="light"] .metrics-group {
+  border: 1px solid #e7edf3;
+}
+
+html[data-theme="light"] .indicator.operational {
+  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.12);
+}
+
+html[data-theme="light"] .text-danger {
+  color: #b91c1c !important;
+}
+
 /* ========================================================================== */
 
 * {
@@ -63,7 +148,9 @@ html[data-theme="light"] .card input:focus {
 }
 
 body, #root {
-  background-color: var(--bg);
+  background:
+    radial-gradient(circle at top left, rgba(2, 132, 199, 0.08), transparent 34rem),
+    var(--bg);
   color: var(--text);
   margin: 0;
   padding: 0;
@@ -86,7 +173,7 @@ header {
   gap: 1rem;
   margin-bottom: 2.5rem;
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -113,6 +200,7 @@ header nav {
 /* ==========================================================================
    PADRONIZAÇÃO GLOBAL DE TODOS OS BOTÕES DO SISTEMA
    ========================================================================== */
+
 header nav button,
 .card button,
 button[type="submit"],
@@ -133,18 +221,29 @@ button[type="submit"],
   box-sizing: border-box;
   margin: 0;
   line-height: 1;
+  gap: 8px;
+}
+
+.icon {
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.icon-button {
+  width: 40px;
+  padding: 0 !important;
 }
 
 /* Variação: Botões Padrão do Topo */
 header nav button {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  border: 1px solid var(--card-border);
   color: var(--text);
   backdrop-filter: blur(4px);
 }
 
 header nav button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-hover);
   transform: translateY(-2px);
 }
 
@@ -170,7 +269,7 @@ header nav button.btn-logout:hover {
   border: 1px solid var(--card-border);
   padding: 2.5rem 3rem;
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-card);
   width: 100%;
   max-width: 800px; 
   margin: 0 auto;
@@ -200,8 +299,8 @@ header nav button.btn-logout:hover {
   padding: 14px 16px;
   margin-top: 8px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--card-border);
+  background-color: var(--input-bg);
   color: var(--text); 
   outline: none;
   font-size: 1rem;
@@ -226,8 +325,7 @@ button[type="submit"],
   border: 1px solid transparent; 
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   color: var(--btn-text);
-  box-shadow: 0 4px 15px rgba(53, 230, 255, 0.2);
-  gap: 8px;
+  box-shadow: var(--shadow-button);
 }
 
 .card button:not(.btn-secondary):hover, 
@@ -242,15 +340,15 @@ button[type="submit"]:hover,
 /* Botão Secundário (Cancelar / Fechar Modal) */
 .btn-secondary,
 .session-expired .button-group button.btn-secondary {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  border: 1px solid var(--card-border);
   color: var(--text);
 }
 
 .btn-secondary:hover,
 .session-expired .button-group button.btn-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-2);
+  background: var(--surface-hover);
   transform: translateY(-2px);
 }
 
@@ -286,58 +384,70 @@ button[type="submit"]:hover,
 }
 
 /* ==========================================================================
-   OUTROS COMPONENTES DO SISTEMA (MENSAGENS)
+   OUTROS COMPONENTES DO SISTEMA (MENSAGENS & ALERTAS)
    ========================================================================== */
-.error, .session-expired, .success {
+
+/* 1. Base estrutural idêntica para todos os blocos de mensagens */
+.error, .session-expired, .success, .alert-critical {
   padding: 16px 20px;
   border-radius: 12px;
   margin-top: 16px;
   margin-bottom: 16px;
   font-size: 0.95rem;
   font-weight: 500;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.error, .session-expired {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #fecaca;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.05);
+/* 2. Blocos de ERRO, SESSÃO EXPIRADA e ALERTA CRÍTICO (Usando as variáveis do Tema) */
+.error, .session-expired, .alert-critical {
+  background: var(--alert-bg);
+  border: 1px solid var(--alert-border);
+  color: var(--alert-text);
   border-left: 4px solid var(--danger);
 }
 
-/* Classe .success adicionada para garantir a cor verde! */
+/* 3. Bloco de SUCESSO (Mantido com o padrão original do sistema) */
 .success {
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid rgba(16, 185, 129, 0.3);
   color: var(--success); 
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.05);
   border-left: 4px solid var(--success);
 }
 
-.session-expired {
+/* 4. Customizações específicas do bloco de Sessão Expirada e Alertas Críticos */
+.session-expired, .alert-critical {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto 2rem auto; 
+  max-width: 1000px;
+  margin: 2.5rem auto;
+  box-sizing: border-box;
 }
 
-.session-expired h3 {
+/* Títulos internos dos alertas */
+.error h3, .session-expired h3, .alert-critical h3 {
   margin-top: 0;
   margin-bottom: 8px;
-  color: #fecaca;
+  color: var(--alert-title);
   font-size: 1.1rem;
   font-weight: 700;
 }
 
-.session-expired p {
+.session-expired p, .alert-critical p {
   margin: 0;
-  color: var(--muted);
   font-size: 0.95rem;
   line-height: 1.5;
 }
 
+/* Tags internas de detalhes do Alerta Crítico (Modo Claro/Escuro automático) */
+.alert-critical strong {
+  color: var(--danger); /* Valores como 'Fault' ou '2.1 PSI' ganham o vermelho vivo */
+}
+
+/* ==========================================================================
+   INFO BOX, DASHBOARD & ANIMAÇÕES (Mantidos originais)
+   ========================================================================== */
 .info-box {
-  background: rgba(53, 230, 255, 0.05);
-  border: 1px solid rgba(53, 230, 255, 0.2);
+  background: var(--accent-soft);
+  border: 1px solid rgba(2, 132, 199, 0.22);
   border-radius: 12px;
   padding: 16px 20px;
   width: 100%;
@@ -374,10 +484,73 @@ button[type="submit"]:hover,
   100% { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 5px var(--accent-2); }
 }
 
-.dashboard-container, .profile-container {
+.dashboard-container, .profile-container, .admin-users-container {
   width: 100%;
   max-width: 1000px;
   margin: 0 auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h2 {
+  margin-top: 0;
+  color: var(--text);
+  letter-spacing: 0;
+}
+
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.connection-status {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface);
+  gap: 8px;
+}
+
+.connection-status.connected {
+  color: var(--success);
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.connection-status.connecting,
+.connection-status.reconnecting {
+  color: var(--warning);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.connection-status.offline {
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .status-badge,
@@ -408,10 +581,257 @@ header h1 span {
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
-  background: rgba(53, 230, 255, 0.1);
+  background: var(--accent-soft);
   color: var(--accent-2);
-  border: 1px solid rgba(53, 230, 255, 0.2);
+  border: 1px solid rgba(2, 132, 199, 0.22);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-shadow: none;
+}
+
+/* ==========================================================================
+   MELHORIAS DE LAYOUT DO DASHBOARD (MÉTRICAS E GRID 2x2)
+   ========================================================================== */
+
+/* Força o grid a ter exatamente 2 colunas simétricas para acomodar as 4 máquinas */
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Card Principal da Máquina */
+.telemetry-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.telemetry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Cabeçalho do Card */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--card-border);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+/* Indicador luminoso de status */
+.indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.indicator.operational { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
+.indicator.alert { background-color: var(--warning); box-shadow: 0 0 8px var(--warning); }
+.indicator.critical { background-color: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+/* Subseções de Telemetria (Magnet, Host, Infra) */
+.metric-section {
+  margin-bottom: 1rem;
+}
+
+.metric-section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  border-left: 2px solid var(--heading-border);
+  padding-left: 6px;
+}
+
+/* Alinhamento lado a lado de métricas em sub-grids de 2 colunas internas */
+.metrics-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 1rem;
+  background: var(--metric-bg);
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+/* Item de métrica individual */
+.metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.metric label {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.metric span {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Cores de Alerta de texto */
+.text-danger {
+  color: var(--danger) !important;
+}
+
+/* Rodapé do tempo de atualização */
+.timestamp {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: right;
+  border-top: 1px solid var(--card-border);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+.modal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--card);
+  border: 1px solid var(--alert-border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.alert-critical-modal h3 {
+  margin-top: 0;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert-critical-modal p {
+  color: var(--muted);
+}
+
+.alert-details {
+  background: var(--alert-details-bg);
+  padding: 12px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.alert-details p {
+  margin: 4px 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.alert-dismiss {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: var(--alert-text);
+}
+
+.admin-users-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-user-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+
+.admin-user-row strong,
+.admin-user-row span {
+  display: block;
+}
+
+.admin-user-row span {
+  color: var(--muted);
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+.role-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.role-toggle {
+  min-height: 34px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.role-toggle input {
+  accent-color: var(--accent-2);
+}
+
+/* Responsividade caso abra em telas pequenas */
+@media (max-width: 768px) {
+  .dashboard-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-actions {
+    justify-content: flex-start;
+  }
+
+  .telemetry-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-row {
+    grid-template-columns: 1fr;
+  }
+
+  .role-toggle-group {
+    justify-content: flex-start;
+  }
 }

@@ -10,9 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 
-// ADICIONADO: Configuração estrita do Middleware de Autenticação JWT
 var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("A chave 'Jwt:Key' não foi configurada no Monitor.API.");
+    ?? throw new InvalidOperationException("A chave 'Jwt:Key' nao foi configurada no Monitor.API.");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -30,20 +29,21 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = builder.Configuration.GetValue<bool>("Jwt:ValidateAudience"),
         ValidAudience = builder.Configuration["Jwt:Audience"],
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero // Remove os 5 minutos de tolerância padrão para validação imediata
+        ClockSkew = TimeSpan.Zero
     };
 
-    // IMPORTANTE: Permite que o SignalR leia o token enviado via QueryString/Factory pelo Front-end
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
+
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/telemetryHub"))
             {
                 context.Token = accessToken;
             }
+
             return Task.CompletedTask;
         }
     };
@@ -75,8 +75,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("FrontendPolicy");
-
-// ADICIONADO: A ordem aqui importa! Primeiro se Autentica (quem você é), depois Autoriza (o que pode fazer)
 app.UseAuthentication();
 app.UseAuthorization();
 

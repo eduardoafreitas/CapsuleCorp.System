@@ -1,101 +1,119 @@
-# CapsuleCorp.System.API 💊
+# CapsuleCorp System
 
-[![.NET 9](https://img.shields.io/badge/.NET-9.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/9.0)
-[![EF Core](https://img.shields.io/badge/EF%20Core-9.0-blue)](https://learn.microsoft.com/ef/core/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+Ecossistema para autenticação, RBAC e monitoramento de telemetria de equipamentos de ressonância magnética.
 
-Plataforma de observabilidade e telemetria IoT em tempo real. Ecossistema full-stack integrado com .NET 9, SignalR, PostgreSQL e React/TypeScript, com simulador de frotas e injeção de anomalias operacionais.
+API de autenticação desenvolvida em .NET 9, com foco em segurança, arquitetura limpa e integração com aplicações web modernas.
 
-## 🚀 Status do Projeto
+- .NET 9
+- React + Vite + TypeScript
+- PostgreSQL
+- JWT + refresh tokens
+- SignalR para telemetria em tempo real
+- Entity Framework Core
 
-O núcleo de autenticação está implementado e funcional, incluindo autenticação baseada em JWT, refresh tokens e gerenciamento de usuários.
+## Projetos
 
-## 🛠 Tecnologias Utilizadas
+| Projeto | Função |
+| --- | --- |
+| `CapsuleCorp.Auth` | API de autenticação, refresh token, usuários e roles |
+| `CapsuleCorp.Monitor.API` | API de telemetria, histórico e SignalR hub |
+| `CapsuleCorp.Simulator` | Simulador IoT de equipamentos MRI |
+| `frontend` | SPA React com dashboard, RBAC e tema claro/escuro |
+| `CapsuleCorp.Shared` | Modelos compartilhados |
 
-* .NET 9 (ASP.NET Core)
-* Entity Framework Core 9
-* PostgreSQL
-* JWT Authentication
-* BCrypt.Net
-* Swagger (OpenAPI)
-
-## 🏗 Arquitetura
-
-O projeto segue princípios de Clean Architecture, com separação entre responsabilidades de API, serviços, modelos e persistência de dados.
-
-Principais componentes:
-
-* **Controllers** — exposição dos endpoints REST.
-* **Services** — regras de negócio e autenticação.
-* **Data** — contexto do Entity Framework e migrations.
-* **Models / DTOs** — entidades e objetos de transferência de dados.
-
-## 📋 Funcionalidades
-
-* [x] Registro de usuários.
-* [x] Login com JWT.
-* [x] Refresh Token com rotação.
-* [x] Revogação de tokens.
-* [x] Atualização de perfil.
-* [x] Consulta de usuário autenticado.
-* [x] Persistência com Entity Framework Core.
-* [x] Documentação Swagger.
-
-## 🔒 Segurança
-
-* Senhas protegidas com BCrypt.
-* Autenticação baseada em JWT.
-* Refresh Tokens persistidos em banco de dados.
-* Endpoints protegidos por autorização.
-* Suporte a cookies HttpOnly para integração com SPA.
-
-## ⚙️ Como executar
+## Como Executar
 
 ### Pré-requisitos
 
-* .NET 9 SDK
-* PostgreSQL
-* Visual Studio 2022 ou VS Code
+- .NET SDK instalado
+- Node.js LTS
+- PostgreSQL
 
-### Executando o projeto
+### Backend
 
-1. Clone o repositório:
+Configure as connection strings e chaves JWT em `appsettings.Development.json` dos projetos:
 
-```bash
-git clone https://github.com/eduardoafreitas/CapsuleCorp.System.git
-```
+- `CapsuleCorp.Auth`
+- `CapsuleCorp.Monitor.API`
 
-2. Configure a conexão com o banco de dados e as chaves JWT em `appsettings.Development.json`.
-
-3. Execute as migrations:
+Restaure e compile:
 
 ```bash
-dotnet ef database update
+dotnet restore
+dotnet build
 ```
 
-4. Inicie a aplicação:
+Execute as APIs pelo Visual Studio, Rider ou terminal.
+
+### Frontend
+
+Na pasta `frontend`, configure as variáveis se necessário:
+
+```env
+VITE_API_URL=https://localhost:5001
+VITE_MONITOR_API_URL=https://localhost:6001
+VITE_MONITOR_HUB_URL=https://localhost:6001/telemetryHub
+```
+
+Execute:
 
 ```bash
-dotnet run
+npm install
+npm run dev
 ```
 
-5. Acesse o Swagger pela URL exibida no console.
+### Simulador
 
-## 📡 Principais Endpoints
+Execute `CapsuleCorp.Simulator` para iniciar o envio contínuo de telemetria ao Monitor API.
 
-| Método | Endpoint                 |
-| ------ | ------------------------ |
-| POST   | /api/Auth/register       |
-| POST   | /api/Auth/login          |
-| POST   | /api/Auth/refresh        |
-| POST   | /api/Auth/revoke         |
-| PUT    | /api/Auth/update-profile |
-| GET    | /api/Auth/me             |
+## Autenticação e Roles
 
-## 🤝 Contribuição
+Roles seedadas:
 
-Contribuições são bem-vindas através de Pull Requests.
+- `Admin`
+- `Editor`
+- `Viewer`
 
-## 📄 Licença
+Permissões atuais:
 
-Este projeto está licenciado sob a licença MIT.
+| Recurso | Roles |
+| --- | --- |
+| Dashboard de telemetria | Admin, Editor, Viewer |
+| Teste de tela de conexão | Admin, Editor |
+| Gestão de usuários e roles | Admin |
+
+O front possui uma tela `Usuarios` para admins alterarem roles sem editar manualmente a tabela `UserRoles`. O usuário alterado deve refazer login para receber um JWT atualizado.
+
+## Telemetria
+
+Endpoints principais:
+
+| Método | Endpoint | Descrição |
+| --- | --- | --- |
+| POST | `/api/telemetria` | Recebe payload do simulador e transmite via SignalR |
+| GET | `/api/telemetria` | Consulta histórico paginado |
+| GET | `/api/telemetria/latest` | Retorna a última telemetria de cada equipamento |
+| Hub | `/telemetryHub` | Canal SignalR para atualizações em tempo real |
+
+O dashboard carrega primeiro `/api/telemetria/latest` e continua atualizando em tempo real pelo SignalR.
+
+## Endpoints de Auth
+
+| Método | Endpoint |
+| --- | --- |
+| POST | `/api/Auth/register` |
+| POST | `/api/Auth/login` |
+| POST | `/api/Auth/refresh` |
+| POST | `/api/Auth/logout` |
+| POST | `/api/Auth/revoke` |
+| PUT | `/api/Auth/update-profile` |
+| GET | `/api/Auth/me` |
+| GET | `/api/admin/users` |
+| PUT | `/api/admin/users/{userId}/roles` |
+
+## Notas de Desenvolvimento
+
+- O simulador ainda envia telemetria para `POST /api/telemetria` sem autenticação própria para não quebrar o fluxo local.
+- Consultas de telemetria e SignalR exigem JWT válido.
+- Se uma role for alterada, faça logout/login para atualizar as claims no token.
+- O tema claro foi refatorado com tokens próprios de superfície, sombra, borda e contraste.

@@ -1,37 +1,55 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import * as signalR from "@microsoft/signalr";
+import { useAuth } from "../auth/AuthContext";
+import { can } from "../auth/permissions";
+import { Icon } from "../components/Icon";
 import { getAccessToken } from "../services/api";
+import { getLatestTelemetry, getRecentTelemetry } from "../services/telemetryApi";
+import { ConnectionStatus, type ConnectionState } from "../telemetry/components/ConnectionStatus";
+import { CriticalAlertModal } from "../telemetry/components/CriticalAlertModal";
+import { TelemetryCard } from "../telemetry/components/TelemetryCard";
+import { getLatestTelemetryByEquipment, isCriticalTelemetry, sortTelemetryByEquipment } from "../telemetry/thresholds";
+import type { Telemetry } from "../telemetry/types";
 
 const MONITOR_HUB_URL = import.meta.env.VITE_MONITOR_HUB_URL ?? "https://localhost:6001/telemetryHub";
 
-interface Telemetry {
-  equipmentId: string;
-  timestamp: string;
-  overallStatus: string;
-  hostCpuTemperatureCelsius: number;
-  magnetHeliumLevelPercentage: number;
-  magnetCompressorStatus: string;
-  roomTemperatureCelsius: number;
-  chillerWaterFlowLpm: number;
-}
-
-// 1. Criamos a interface para as propriedades do Dashboard
-interface DashboardProps {
-  userRoles?: string[];
-}
-
-// 2. Modificamos a assinatura para receber as userRoles (padrão vazio caso venha undefined)
-export default function Dashboard({ userRoles = [] }: DashboardProps) {
+export default function Dashboard() {
+  const { userRoles } = useAuth();
   const [telemetryData, setTelemetryData] = useState<Telemetry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [criticalAlert, setCriticalAlert] = useState<Telemetry | null>(null);
-  
-  // Estado de debug para forçar o loading
   const [debugLoading, setDebugLoading] = useState(false);
-  const connectionRef = useRef<signalR.HubConnection | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
+
+    getLatestTelemetry()
+      .catch(() => getRecentTelemetry())
+      .then(records => {
+        if (!isMounted) return;
+        setTelemetryData(getLatestTelemetryByEquipment(records));
+        setHistoryError(null);
+      })
+      .catch(error => {
+        console.error("Erro ao carregar historico de telemetria:", error);
+        if (isMounted) {
+          setHistoryError("Nao foi possivel carregar o historico recente. Aguardando telemetria em tempo real.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setHistoryLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    let retryTimer: number | undefined;
 
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(MONITOR_HUB_URL, {
@@ -41,32 +59,48 @@ export default function Dashboard({ userRoles = [] }: DashboardProps) {
       .configureLogging(signalR.LogLevel.Information)
       .build();
 
-    connectionRef.current = connection;
-
     const startConnection = async () => {
       try {
+        setConnectionState("connecting");
+
         if (connection.state === signalR.HubConnectionState.Disconnected) {
           await connection.start();
-          console.log("Conectado ao SignalR Hub");
-          if (isMounted) setLoading(false);
+        }
+
+        if (isMounted) {
+          setConnectionState("connected");
         }
       } catch (err) {
         console.error("Erro ao conectar ao SignalR:", err);
+
         if (isMounted) {
-          setTimeout(startConnection, 5000);
+          setConnectionState("offline");
+          retryTimer = window.setTimeout(startConnection, 5000);
         }
       }
     };
+
+    connection.onreconnecting(() => {
+      if (isMounted) setConnectionState("reconnecting");
+    });
+
+    connection.onreconnected(() => {
+      if (isMounted) setConnectionState("connected");
+    });
+
+    connection.onclose(() => {
+      if (isMounted) setConnectionState("offline");
+    });
 
     connection.on("ReceiveTelemetry", (data: Telemetry) => {
       if (!isMounted) return;
 
       setTelemetryData(prev => {
-        const filtered = prev.filter(t => t.equipmentId !== data.equipmentId);
-        return [...filtered, data];
+        const filtered = prev.filter(item => item.equipmentId !== data.equipmentId);
+        return [...filtered, data].sort(sortTelemetryByEquipment);
       });
 
-      if (data.overallStatus === "Critical") {
+      if (isCriticalTelemetry(data)) {
         setCriticalAlert(prev => {
           if (!prev || prev.equipmentId !== data.equipmentId) return data;
           return prev;
@@ -78,111 +112,75 @@ export default function Dashboard({ userRoles = [] }: DashboardProps) {
 
     return () => {
       isMounted = false;
+      if (retryTimer) window.clearTimeout(retryTimer);
       connection.off("ReceiveTelemetry");
       connection.stop();
     };
   }, []);
 
-  // Tela de carregamento mantendo sua classe original 'info-box'
-  if ((loading && telemetryData.length === 0) || debugLoading) {
+  if (debugLoading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      <div className="dashboard-loading">
         <div className="info-box">
           <p>Estabelecendo conexão em tempo real com a frota...</p>
         </div>
-        
-        {debugLoading && (
-          <button 
-            className="btn-secondary" 
-            onClick={() => setDebugLoading(false)} 
-            style={{ width: 'max-content', margin: '0 auto' }}
-          >
-            Sair do Modo de Teste
-          </button>
-        )}
+
+        <button
+          className="btn-secondary"
+          onClick={() => setDebugLoading(false)}
+        >
+          Sair do modo de teste
+        </button>
       </div>
     );
   }
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+      <div className="dashboard-header">
         <div>
           <h2>Painel de Controle da Frota</h2>
           <div className="status-badge">
-            Total de Máquinas Ativas: {telemetryData.length}
+            Total de máquinas ativas: {telemetryData.length}
           </div>
         </div>
-        
-        {/* O botão agora só renderiza se o usuário for Admin ou Editor */}
-        {(userRoles.includes("Admin") || userRoles.includes("Editor")) && (
-          <button 
-            className="btn-secondary"
-            onClick={() => setDebugLoading(true)}
-          >
-            🔧 Testar Tela de Conexão
-          </button>
-        )}
+
+        <div className="dashboard-actions">
+          <ConnectionStatus state={connectionState} />
+
+          {can(userRoles, "telemetry:test") && (
+            <button
+              className="btn-secondary"
+              onClick={() => setDebugLoading(true)}
+            >
+              <Icon name="wrench" />
+              Testar tela de conexão
+            </button>
+          )}
+        </div>
       </div>
 
+      {telemetryData.length === 0 && (
+        <div className="info-box">
+          <p>
+            {historyLoading
+              ? "Carregando historico recente dos equipamentos..."
+              : historyError ?? "Aguardando o primeiro pacote de telemetria dos equipamentos."}
+          </p>
+        </div>
+      )}
+
       <div className="telemetry-grid">
-        {telemetryData.map((m) => (
-          <div key={m.equipmentId} className={`telemetry-card ${m.overallStatus.toLowerCase()}`}>
-            <div className="card-header">
-              <h3>{m.equipmentId}</h3>
-              <span className={`indicator ${m.overallStatus.toLowerCase()}`}></span>
-            </div>
-            <div className="metrics">
-              <div className="metric">
-                <label>Hélio</label>
-                <span className={m.magnetHeliumLevelPercentage < 40 ? "text-danger" : ""}>
-                  {m.magnetHeliumLevelPercentage}%
-                </span>
-              </div>
-              <div className="metric">
-                <label>Temp. CPU</label>
-                <span>{m.hostCpuTemperatureCelsius}°C</span>
-              </div>
-              <div className="metric">
-                <label>Chiller</label>
-                <span>{m.chillerWaterFlowLpm} LPM</span>
-              </div>
-              <div className="metric">
-                <label>Status Comp.</label>
-                <span className={m.magnetCompressorStatus === "Fault" ? "text-danger" : ""}>
-                  {m.magnetCompressorStatus}
-                </span>
-              </div>
-            </div>
-            <div className="timestamp">
-              Última atualização: {new Date(m.timestamp).toLocaleTimeString()}
-            </div>
-          </div>
+        {telemetryData.map(telemetry => (
+          <TelemetryCard key={telemetry.equipmentId} telemetry={telemetry} />
         ))}
       </div>
 
       {criticalAlert && (
-        <div className="modal-backdrop alert-critical">
-          <div className="modal">
-            <h3 style={{ color: "var(--danger)", marginTop: 0 }}>⚠️ ALERTA CRÍTICO DE SISTEMA</h3>
-            <p style={{ color: "var(--muted)", margin: "16px 0" }}>
-              O equipamento <strong style={{ color: "var(--text)" }}>{criticalAlert.equipmentId}</strong> reportou uma falha grave!
-            </p>
-            <div className="alert-details" style={{ background: "rgba(239, 68, 68, 0.1)", padding: "12px", borderRadius: "8px", marginBottom: "20px" }}>
-              <p style={{ margin: "4px 0", color: "#fca5a5" }}><strong>Status:</strong> {criticalAlert.overallStatus}</p>
-              <p style={{ margin: "4px 0", color: "#fca5a5" }}><strong>Compressor:</strong> {criticalAlert.magnetCompressorStatus}</p>
-            </div>
-            <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button 
-                className="btn-secondary" 
-                style={{ borderColor: "rgba(239, 68, 68, 0.5)", color: "#fca5a5" }}
-                onClick={() => setCriticalAlert(null)}
-              >
-                Ciente / Silenciar
-              </button>
-            </div>
-          </div>
-        </div>
+        <CriticalAlertModal
+          telemetry={criticalAlert}
+          onClose={() => setCriticalAlert(null)}
+        />
       )}
     </div>
   );
