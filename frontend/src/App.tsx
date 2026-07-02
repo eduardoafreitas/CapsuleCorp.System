@@ -3,13 +3,12 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
-import { clearTokens } from "./services/api";
+import { useAuth } from "./auth/AuthContext";
 import { fetchWithAuth } from "./services/authFetch";
 
 export default function App() {
   const [route, setRoute] = useState<"login" | "register" | "profile" | "dashboard" | "loading">("loading");
-  const [sessionExpired, setSessionExpired] = useState(false);
-  const [userRoles, setUserRoles] = useState<string[]>([]); // 💡 Estado novo: Armazena a lista de roles do usuário
+  const { userRoles, sessionExpired, setSessionExpired, hydrateAuthenticatedSession, clearSession } = useAuth();
 
   // ==========================================================================
   // LÓGICA DO TEMA (Executada imediatamente ao carregar o componente)
@@ -33,56 +32,28 @@ export default function App() {
     async function checkSession() {
       
       if (route === "login") {
-      setUserRoles([]);
+      clearSession();
       return;
       } 
       
-      try {
-        const res = await fetchWithAuth("/api/Auth/me");
-        if (res.ok) {
-          const userData = await res.json();
-          // Captura o array de roles retornado do backend e salva no estado
-          setUserRoles(userData.roles || []);
-          setRoute("dashboard"); // Usuário logado cai direto no Dashboard com segurança
-        } else {
-          clearTokens();
-          setUserRoles([]);
-          setRoute("login");
-        }
-      } catch {
-        clearTokens();
-        setUserRoles([]);
-        setRoute("login");
-      }
+      const isAuthenticated = await hydrateAuthenticatedSession();
+      setRoute(isAuthenticated ? "dashboard" : "login");
     }
     checkSession();
-  }, []);
-
-  // Ouvinte para sessão expirada (Event disparado pelo interceptor/fetch)
-  useEffect(() => {
-    function onSessionExpired() {
-      setSessionExpired(true);
-    }
-    window.addEventListener("sessionExpired", onSessionExpired as EventListener);
-    return () => window.removeEventListener("sessionExpired", onSessionExpired as EventListener);
-  }, []);
+  }, [clearSession, hydrateAuthenticatedSession]);
 
   // Executa o Logout Limpando a Sessão de forma segura
   async function handleLogout() {
     try {
       await fetchWithAuth("/api/Auth/logout", { method: "POST" }).catch(() => null);
     } finally {
-      clearTokens(); // Remove os tokens do localStorage
-      setUserRoles([]); // Limpa as roles do estado
-      setSessionExpired(false); // Garante que fecha o modal se estiver aberto
+      clearSession(); // Remove tokens e estado autenticado
       setRoute("login"); // Joga o usuário de volta para o Login
     }
   }
 
   function handleRelogin() {
-    clearTokens();
-    setUserRoles([]);
-    setSessionExpired(false);
+    clearSession();
     setRoute("login");
   }
 
@@ -156,15 +127,23 @@ export default function App() {
         {route === "login" && (
           <Login
             onLogin={(roles: string[]) => {
-              setSessionExpired(false);
-              setUserRoles(roles || []);
-              setRoute("dashboard");
+              hydrateAuthenticatedSession(roles || []).then(isAuthenticated => {
+                setRoute(isAuthenticated ? "dashboard" : "login");
+              });
             }}
           />
         )}
-        {route === "register" && <Register onRegister={() => { setSessionExpired(false); setRoute("dashboard"); }} />}
+        {route === "register" && (
+          <Register
+            onRegister={(roles: string[]) => {
+              hydrateAuthenticatedSession(roles || []).then(isAuthenticated => {
+                setRoute(isAuthenticated ? "dashboard" : "login");
+              });
+            }}
+          />
+        )}
         {route === "profile" && <Profile />}
-        {route === "dashboard" && <Dashboard userRoles={userRoles}/>}
+        {route === "dashboard" && <Dashboard />}
       </main>
     </div>
   );

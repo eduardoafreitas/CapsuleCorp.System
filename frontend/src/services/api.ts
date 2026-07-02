@@ -41,12 +41,14 @@ function normalizeAuthResponse(obj: any, statusCode: number) {
   const accessToken = obj?.accessToken ?? obj?.AccessToken ?? obj?.token ?? obj?.access_token ?? null;
   const refreshToken = obj?.refreshToken ?? obj?.RefreshToken ?? obj?.refresh_token ?? null;
   const message = obj?.message ?? obj?.error ?? "Processado.";
+  const roles = obj?.roles ?? obj?.Roles ?? [];
   
   return { 
     accessToken, 
     refreshToken, 
     success: statusCode >= 200 && statusCode < 300, 
-    message 
+    message,
+    roles: Array.isArray(roles) ? roles : []
   };
 }
 

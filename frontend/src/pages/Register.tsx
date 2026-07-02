@@ -1,7 +1,7 @@
 ﻿import React, { useState } from "react";
 import { register, login, saveTokens } from "../services/api";
 
-export default function Register({ onRegister }: { onRegister: () => void }) {
+export default function Register({ onRegister }: { onRegister: (roles: string[]) => void }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,7 +38,7 @@ export default function Register({ onRegister }: { onRegister: () => void }) {
         
         // Delay visual antes de redirecionar para o Dashboard
         setTimeout(() => {
-          onRegister();
+          onRegister(auth.roles || []);
         }, 1000);
       } else {
         // O registro deu certo, mas o login automático falhou por algum motivo
