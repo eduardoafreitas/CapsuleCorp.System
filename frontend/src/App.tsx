@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
+import { Icon } from "./components/Icon";
 import { useAuth } from "./auth/AuthContext";
 import { fetchWithAuth } from "./services/authFetch";
 
@@ -83,11 +84,12 @@ export default function App() {
         <nav>
           {/* BOTÃO DO TEMA SEMPRE VISÍVEL (Independente de estar logado ou não) */}
           <button
+            className="icon-button"
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
-            style={{ fontSize: '1.2rem', padding: '0 12px' }}
+            aria-label={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
           >
-            {theme === 'dark' ? '💡' : '🌙'}
+            <Icon name={theme === "dark" ? "sun" : "moon"} />
           </button>
 
           {/* Se o usuário NÃO está logado, mostra APENAS Login e Cadastrar */}
@@ -101,9 +103,16 @@ export default function App() {
           {/* Se o usuário ESTIVER logado, mostra Dashboard, Perfil e Sair */}
           {isUserLoggedIn && (
             <>
-              <button className={route === "dashboard" ? "active" : ""} onClick={() => setRoute("dashboard")}>Dashboard</button>
-              <button className={route === "profile" ? "active" : ""} onClick={() => setRoute("profile")}>Perfil</button>
+              <button className={route === "dashboard" ? "active" : ""} onClick={() => setRoute("dashboard")}>
+                <Icon name="activity" />
+                Dashboard
+              </button>
+              <button className={route === "profile" ? "active" : ""} onClick={() => setRoute("profile")}>
+                <Icon name="user" />
+                Perfil
+              </button>
               <button onClick={handleLogout} className="btn-logout">
+                <Icon name="logOut" />
                 Sair
               </button>
             </>

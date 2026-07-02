@@ -9,7 +9,8 @@ export const EQUIPMENT_ORDER: Record<string, number> = {
 
 export const TELEMETRY_THRESHOLDS = {
   heliumLowPercentage: 40,
-  chillerLowFlowLpm: 80,
+  chillerLowFlowLpm: 40,
+  chillerCriticalFlowLpm: 15,
   magnetMaxTemperatureKelvin: 4.5,
   gantryMaxVibrationG: 0.6,
   roomMaxTemperatureCelsius: 24,
@@ -35,8 +36,7 @@ export function normalizeStatus(status: string): TelemetryStatus {
 export function isCriticalTelemetry(telemetry: Telemetry) {
   return normalizeStatus(telemetry.overallStatus) === "critical"
     || telemetry.magnetCompressorStatus === "Fault"
-    || telemetry.magnetHeliumLevelPercentage < TELEMETRY_THRESHOLDS.heliumLowPercentage
-    || telemetry.chillerWaterFlowLpm < TELEMETRY_THRESHOLDS.chillerLowFlowLpm;
+    || telemetry.chillerWaterFlowLpm < TELEMETRY_THRESHOLDS.chillerCriticalFlowLpm;
 }
 
 export function isLow(value: number, minimum: number) {
@@ -52,4 +52,18 @@ export function sortTelemetryByEquipment(a: Telemetry, b: Telemetry) {
   const orderB = EQUIPMENT_ORDER[b.equipmentId] ?? 99;
 
   return orderA - orderB;
+}
+
+export function getLatestTelemetryByEquipment(records: Telemetry[]) {
+  const latestByEquipment = new Map<string, Telemetry>();
+
+  records.forEach(record => {
+    const current = latestByEquipment.get(record.equipmentId);
+
+    if (!current || new Date(record.timestamp).getTime() > new Date(current.timestamp).getTime()) {
+      latestByEquipment.set(record.equipmentId, record);
+    }
+  });
+
+  return Array.from(latestByEquipment.values()).sort(sortTelemetryByEquipment);
 }

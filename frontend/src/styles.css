@@ -8,10 +8,14 @@
   --bg: #0b1120;
   --card: #111827;
   --card-border: rgba(255, 255, 255, 0.1);
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --input-bg: rgba(0, 0, 0, 0.2);
   --text: #f8fafc;
   --muted: #94a3b8; 
   --accent-1: #8f6cff;
   --accent-2: #35e6ff;
+  --accent-soft: rgba(53, 230, 255, 0.1);
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
@@ -23,6 +27,9 @@
   --alert-text: #fecaca; /* O rosa claro original lê perfeitamente no escuro */
   --alert-title: #fecaca;
   --alert-details-bg: rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 10px 25px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 8px 25px rgba(0, 0, 0, 0.5);
+  --shadow-button: 0 4px 15px rgba(53, 230, 255, 0.2);
 
   color-scheme: dark;
 }
@@ -32,21 +39,31 @@
    ========================================================================== */
 
    html[data-theme="light"] {
-  --bg: #d1d8e0;
-  --card: #ffffff; 
-  --card-border: rgba(11, 17, 32, 0.15); 
-  --text: #0b1120; 
-  --muted: #475569; 
-  --accent-1: #0b1120; 
-  --accent-2: #2563eb; 
-  --btn-text: #ffffff; 
-  --metric-bg: rgba(11, 17, 32, 0.04); 
-  --heading-border: var(--accent-1);    
-  --alert-bg: rgba(239, 68, 68, 0.08);
-  --alert-border: var(--danger);
-  --alert-text: #111827;
+  --bg: #f3f7fb;
+  --card: #ffffff;
+  --card-border: #d7e0ea;
+  --surface: #edf3f8;
+  --surface-hover: #e2ebf4;
+  --input-bg: #ffffff;
+  --text: #0f172a;
+  --muted: #475569;
+  --accent-1: #1d4ed8;
+  --accent-2: #0284c7;
+  --accent-soft: #e0f2fe;
+  --success: #059669;
+  --danger: #dc2626;
+  --warning: #b45309;
+  --btn-text: #ffffff;
+  --metric-bg: #f6f8fb;
+  --heading-border: #0284c7;
+  --alert-bg: #fef2f2;
+  --alert-border: #fecaca;
+  --alert-text: #7f1d1d;
   --alert-title: #b91c1c;
-  --alert-details-bg: rgba(239, 68, 68, 0.04);
+  --alert-details-bg: #fff7f7;
+  --shadow-card: 0 14px 36px rgba(15, 23, 42, 0.10);
+  --shadow-card-hover: 0 18px 45px rgba(15, 23, 42, 0.14);
+  --shadow-button: 0 8px 18px rgba(2, 132, 199, 0.18);
 
   color-scheme: light;
 }
@@ -55,28 +72,73 @@ html[data-theme="light"] header h1 {
   text-shadow: none;
 }
 
+html[data-theme="light"] body,
+html[data-theme="light"] #root {
+  background:
+    linear-gradient(180deg, #eef5fb 0%, #f8fafc 58%, #f3f7fb 100%);
+}
+
 html[data-theme="light"] header nav button,
 html[data-theme="light"] .btn-secondary {
-  background: rgba(11, 17, 32, 0.05);
-  border-color: rgba(11, 17, 32, 0.2);
+  background: var(--card);
+  border-color: var(--card-border);
   color: var(--text);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
 html[data-theme="light"] header nav button:hover,
 html[data-theme="light"] .btn-secondary:hover {
-  background: rgba(11, 17, 32, 0.1);
+  background: var(--surface-hover);
+  border-color: #b7c6d6;
+}
+
+html[data-theme="light"] header nav button.active {
+  background: var(--accent-soft);
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+html[data-theme="light"] header nav button.btn-logout {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+  box-shadow: 0 6px 16px rgba(225, 29, 72, 0.10);
+}
+
+html[data-theme="light"] header nav button.btn-logout:hover {
+  background: #ffe4e6;
+  border-color: #fda4af;
+  color: #9f1239;
 }
 
 html[data-theme="light"] .card input {
-  background-color: #ffffff;
-  border-color: rgba(11, 17, 32, 0.2);
+  background-color: var(--input-bg);
+  border-color: var(--card-border);
   color: var(--text);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 html[data-theme="light"] .card input:focus {
-  border-color: #0b1120;
-  box-shadow: 0 0 0 3px rgba(11, 17, 32, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+html[data-theme="light"] .telemetry-card,
+html[data-theme="light"] .card,
+html[data-theme="light"] .modal {
+  box-shadow: var(--shadow-card);
+}
+
+html[data-theme="light"] .metrics-group {
+  border: 1px solid #e7edf3;
+}
+
+html[data-theme="light"] .indicator.operational {
+  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.12);
+}
+
+html[data-theme="light"] .text-danger {
+  color: #b91c1c !important;
 }
 
 /* ========================================================================== */
@@ -86,7 +148,9 @@ html[data-theme="light"] .card input:focus {
 }
 
 body, #root {
-  background-color: var(--bg);
+  background:
+    radial-gradient(circle at top left, rgba(2, 132, 199, 0.08), transparent 34rem),
+    var(--bg);
   color: var(--text);
   margin: 0;
   padding: 0;
@@ -109,7 +173,7 @@ header {
   gap: 1rem;
   margin-bottom: 2.5rem;
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -157,18 +221,29 @@ button[type="submit"],
   box-sizing: border-box;
   margin: 0;
   line-height: 1;
+  gap: 8px;
+}
+
+.icon {
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.icon-button {
+  width: 40px;
+  padding: 0 !important;
 }
 
 /* Variação: Botões Padrão do Topo */
 header nav button {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  border: 1px solid var(--card-border);
   color: var(--text);
   backdrop-filter: blur(4px);
 }
 
 header nav button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-hover);
   transform: translateY(-2px);
 }
 
@@ -194,7 +269,7 @@ header nav button.btn-logout:hover {
   border: 1px solid var(--card-border);
   padding: 2.5rem 3rem;
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-card);
   width: 100%;
   max-width: 800px; 
   margin: 0 auto;
@@ -224,8 +299,8 @@ header nav button.btn-logout:hover {
   padding: 14px 16px;
   margin-top: 8px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--card-border);
+  background-color: var(--input-bg);
   color: var(--text); 
   outline: none;
   font-size: 1rem;
@@ -250,8 +325,7 @@ button[type="submit"],
   border: 1px solid transparent; 
   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
   color: var(--btn-text);
-  box-shadow: 0 4px 15px rgba(53, 230, 255, 0.2);
-  gap: 8px;
+  box-shadow: var(--shadow-button);
 }
 
 .card button:not(.btn-secondary):hover, 
@@ -266,15 +340,15 @@ button[type="submit"]:hover,
 /* Botão Secundário (Cancelar / Fechar Modal) */
 .btn-secondary,
 .session-expired .button-group button.btn-secondary {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface);
+  border: 1px solid var(--card-border);
   color: var(--text);
 }
 
 .btn-secondary:hover,
 .session-expired .button-group button.btn-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-2);
+  background: var(--surface-hover);
   transform: translateY(-2px);
 }
 
@@ -372,8 +446,8 @@ button[type="submit"]:hover,
    INFO BOX, DASHBOARD & ANIMAÇÕES (Mantidos originais)
    ========================================================================== */
 .info-box {
-  background: rgba(53, 230, 255, 0.05);
-  border: 1px solid rgba(53, 230, 255, 0.2);
+  background: var(--accent-soft);
+  border: 1px solid rgba(2, 132, 199, 0.22);
   border-radius: 12px;
   padding: 16px 20px;
   width: 100%;
@@ -424,6 +498,12 @@ button[type="submit"]:hover,
   margin-bottom: 2rem;
 }
 
+.dashboard-header h2 {
+  margin-top: 0;
+  color: var(--text);
+  letter-spacing: 0;
+}
+
 .dashboard-actions {
   display: flex;
   align-items: center;
@@ -451,12 +531,14 @@ button[type="submit"]:hover,
   font-weight: 700;
   text-transform: uppercase;
   color: var(--muted);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
+  gap: 8px;
 }
 
 .connection-status.connected {
   color: var(--success);
   border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .connection-status.connecting,
@@ -468,6 +550,7 @@ button[type="submit"]:hover,
 .connection-status.offline {
   color: var(--danger);
   border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .status-badge,
@@ -498,9 +581,9 @@ header h1 span {
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
-  background: rgba(53, 230, 255, 0.1);
+  background: var(--accent-soft);
   color: var(--accent-2);
-  border: 1px solid rgba(53, 230, 255, 0.2);
+  border: 1px solid rgba(2, 132, 199, 0.22);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-shadow: none;
@@ -524,7 +607,7 @@ header h1 span {
   border: 1px solid var(--card-border);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -532,7 +615,7 @@ header h1 span {
 
 .telemetry-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-card-hover);
 }
 
 /* Cabeçalho do Card */
@@ -540,7 +623,7 @@ header h1 span {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--card-border);
   padding-bottom: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -598,7 +681,7 @@ header h1 span {
 
 .metric label {
   color: var(--muted);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .metric span {
@@ -618,7 +701,7 @@ header h1 span {
   font-size: 0.75rem;
   color: var(--muted);
   text-align: right;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--card-border);
 }
 
 .modal-backdrop {
@@ -629,7 +712,8 @@ header h1 span {
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(3px);
 }
 
 .modal {
@@ -645,6 +729,9 @@ header h1 span {
 .alert-critical-modal h3 {
   margin-top: 0;
   color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .alert-critical-modal p {

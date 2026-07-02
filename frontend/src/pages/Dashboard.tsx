@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import * as signalR from "@microsoft/signalr";
 import { useAuth } from "../auth/AuthContext";
 import { can } from "../auth/permissions";
+import { Icon } from "../components/Icon";
 import { getAccessToken } from "../services/api";
+import { getRecentTelemetry } from "../services/telemetryApi";
 import { ConnectionStatus, type ConnectionState } from "../telemetry/components/ConnectionStatus";
 import { CriticalAlertModal } from "../telemetry/components/CriticalAlertModal";
 import { TelemetryCard } from "../telemetry/components/TelemetryCard";
-import { isCriticalTelemetry, sortTelemetryByEquipment } from "../telemetry/thresholds";
+import { getLatestTelemetryByEquipment, isCriticalTelemetry, sortTelemetryByEquipment } from "../telemetry/thresholds";
 import type { Telemetry } from "../telemetry/types";
 
 const MONITOR_HUB_URL = import.meta.env.VITE_MONITOR_HUB_URL ?? "https://localhost:6001/telemetryHub";
@@ -17,6 +19,32 @@ export default function Dashboard() {
   const [connectionState, setConnectionState] = useState<ConnectionState>("connecting");
   const [criticalAlert, setCriticalAlert] = useState<Telemetry | null>(null);
   const [debugLoading, setDebugLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getRecentTelemetry()
+      .then(records => {
+        if (!isMounted) return;
+        setTelemetryData(getLatestTelemetryByEquipment(records));
+        setHistoryError(null);
+      })
+      .catch(error => {
+        console.error("Erro ao carregar historico de telemetria:", error);
+        if (isMounted) {
+          setHistoryError("Nao foi possivel carregar o historico recente. Aguardando telemetria em tempo real.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setHistoryLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -124,6 +152,7 @@ export default function Dashboard() {
               className="btn-secondary"
               onClick={() => setDebugLoading(true)}
             >
+              <Icon name="wrench" />
               Testar tela de conexão
             </button>
           )}
@@ -132,7 +161,11 @@ export default function Dashboard() {
 
       {telemetryData.length === 0 && (
         <div className="info-box">
-          <p>Aguardando o primeiro pacote de telemetria dos equipamentos.</p>
+          <p>
+            {historyLoading
+              ? "Carregando historico recente dos equipamentos..."
+              : historyError ?? "Aguardando o primeiro pacote de telemetria dos equipamentos."}
+          </p>
         </div>
       )}
 

@@ -1,3 +1,4 @@
+import { Icon } from "../../components/Icon";
 import type { Telemetry } from "../types";
 
 type CriticalAlertModalProps = {
@@ -9,7 +10,10 @@ export function CriticalAlertModal({ telemetry, onClose }: CriticalAlertModalPro
   return (
     <div className="modal-backdrop">
       <div className="modal alert-critical-modal">
-        <h3>Alerta crítico de sistema</h3>
+        <h3>
+          <Icon name="alert" />
+          Alerta crítico de sistema
+        </h3>
         <p>
           O equipamento <strong>{telemetry.equipmentId}</strong> reportou uma falha grave.
         </p>
