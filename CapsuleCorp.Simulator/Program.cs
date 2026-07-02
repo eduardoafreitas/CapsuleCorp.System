@@ -134,7 +134,7 @@ namespace CapsuleCorp.Simulator
             }
 
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\nâš ï¸ Seleção inválida. Retornando ao menu...");
+            Console.WriteLine("\n⚠️ Seleção inválida. Retornando ao menu...");
             Thread.Sleep(1200);
             Console.ResetColor();
             return string.Empty;
