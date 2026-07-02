@@ -484,7 +484,7 @@ button[type="submit"]:hover,
   100% { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 5px var(--accent-2); }
 }
 
-.dashboard-container, .profile-container {
+.dashboard-container, .profile-container, .admin-users-container {
   width: 100%;
   max-width: 1000px;
   margin: 0 auto;
@@ -759,6 +759,59 @@ header h1 span {
   color: var(--alert-text);
 }
 
+.admin-users-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-user-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+
+.admin-user-row strong,
+.admin-user-row span {
+  display: block;
+}
+
+.admin-user-row span {
+  color: var(--muted);
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+.role-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.role-toggle {
+  min-height: 34px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.role-toggle input {
+  accent-color: var(--accent-2);
+}
+
 /* Responsividade caso abra em telas pequenas */
 @media (max-width: 768px) {
   .dashboard-header {
@@ -772,5 +825,13 @@ header h1 span {
 
   .telemetry-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-user-row {
+    grid-template-columns: 1fr;
+  }
+
+  .role-toggle-group {
+    justify-content: flex-start;
   }
 }

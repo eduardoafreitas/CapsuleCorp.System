@@ -5,10 +5,12 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import { Icon } from "./components/Icon";
 import { useAuth } from "./auth/AuthContext";
+import { can } from "./auth/permissions";
 import { fetchWithAuth } from "./services/authFetch";
+import AdminUsers from "./pages/AdminUsers";
 
 export default function App() {
-  const [route, setRoute] = useState<"login" | "register" | "profile" | "dashboard" | "loading">("loading");
+  const [route, setRoute] = useState<"login" | "register" | "profile" | "dashboard" | "admin-users" | "loading">("loading");
   const { userRoles, sessionExpired, setSessionExpired, hydrateAuthenticatedSession, clearSession } = useAuth();
 
   // ==========================================================================
@@ -67,7 +69,7 @@ export default function App() {
   }
 
   // Define se o usuário está em um estado autenticado para simplificar as condicionais
-  const isUserLoggedIn = route === "dashboard" || route === "profile";
+  const isUserLoggedIn = route === "dashboard" || route === "profile" || route === "admin-users";
 
   return (
     <div className="app">
@@ -111,6 +113,12 @@ export default function App() {
                 <Icon name="user" />
                 Perfil
               </button>
+              {can(userRoles, "users:manage") && (
+                <button className={route === "admin-users" ? "active" : ""} onClick={() => setRoute("admin-users")}>
+                  <Icon name="lock" />
+                  Usuarios
+                </button>
+              )}
               <button onClick={handleLogout} className="btn-logout">
                 <Icon name="logOut" />
                 Sair
@@ -152,6 +160,7 @@ export default function App() {
           />
         )}
         {route === "profile" && <Profile />}
+        {route === "admin-users" && <AdminUsers />}
         {route === "dashboard" && <Dashboard />}
       </main>
     </div>

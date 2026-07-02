@@ -4,7 +4,7 @@ import { useAuth } from "../auth/AuthContext";
 import { can } from "../auth/permissions";
 import { Icon } from "../components/Icon";
 import { getAccessToken } from "../services/api";
-import { getRecentTelemetry } from "../services/telemetryApi";
+import { getLatestTelemetry, getRecentTelemetry } from "../services/telemetryApi";
 import { ConnectionStatus, type ConnectionState } from "../telemetry/components/ConnectionStatus";
 import { CriticalAlertModal } from "../telemetry/components/CriticalAlertModal";
 import { TelemetryCard } from "../telemetry/components/TelemetryCard";
@@ -25,7 +25,8 @@ export default function Dashboard() {
   useEffect(() => {
     let isMounted = true;
 
-    getRecentTelemetry()
+    getLatestTelemetry()
+      .catch(() => getRecentTelemetry())
       .then(records => {
         if (!isMounted) return;
         setTelemetryData(getLatestTelemetryByEquipment(records));
